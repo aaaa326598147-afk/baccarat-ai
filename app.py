@@ -123,3 +123,68 @@ st.write("")
 st.write("")
 st.write("")
 st.write("") # 這裡多留幾行，確保最下面的內容不會被手機按鈕擋住
+import streamlit as st
+import random
+import time
+from datetime import datetime
+import os
+import base64
+
+# --- 1. 初始化與密鑰 ---
+now = datetime.now()
+today_str = now.strftime("%Y-%m-%d")
+today_code = now.strftime("%m%d")
+
+if 'login' not in st.session_state: st.session_state.login = False
+if 'history' not in st.session_state: st.session_state.history = []
+if 'win_count' not in st.session_state: st.session_state.win_count = 0
+
+# --- 2. 登入畫面 ---
+if not st.session_state.login:
+    st.set_page_config(page_title="💎 私人俱樂部", layout="centered")
+    st.markdown("<style>.stApp { background-color: #121212; }</style>", unsafe_allow_html=True)
+    st.title("💎 私人俱樂部")
+    if st.text_input("輸入金鑰：", type="password") == today_code:
+        if st.button("登入"): st.session_state.login = True; st.rerun()
+    st.stop()
+
+# --- 3. 背景與裝潢邏輯 (把圖變透明背景) ---
+st.set_page_config(page_title="💎 AI 決策系統", layout="centered")
+
+cover_path = "cover.jpg"
+if os.path.exists(cover_path):
+    with open(cover_path, "rb") as f:
+        data = base64.b64encode(f.read()).decode()
+    
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/jpeg;base64,{data}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }}
+        .stApp::before {{
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.85); /* 0.85 代表讓圖案變很暗、隱隱約約 */
+            z-index: -1;
+        }}
+        h1, h2, h3, p, .stMetric, [data-testid="stMetricValue"] {{ color: #FFFFFF !important; }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# --- 4. 主內容區 ---
+st.title("💎 深夜筆電・獲利紀實")
+room_id = st.sidebar.text_input("輸入房號", placeholder="例如：VIP-01")
+
+if not room_id:
+    st.warning("👈 請先輸入房號。")
+    st.stop()
+
+# (接下來接續原本的預測邏輯與按鈕即可...)
+st.write(f"📡 監控房號：**{room_id}**")
