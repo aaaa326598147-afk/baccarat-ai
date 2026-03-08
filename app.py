@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 import base64
 
-# --- 1. 初始化 (2026-03-08 密碼 0308) ---
+# --- 1. 初始化 (2026-03-08) ---
 now = datetime.now()
 today_str = now.strftime("%Y-%m-%d")
 today_code = now.strftime("%m%d")
@@ -13,7 +13,6 @@ today_code = now.strftime("%m%d")
 if 'login' not in st.session_state: st.session_state.login = False
 if 'history' not in st.session_state: st.session_state.history = []
 if 'next_pred' not in st.session_state: st.session_state.next_pred = None
-if 'win_count' not in st.session_state: st.session_state.win_count = 0
 
 # --- 2. 主介面設定 (高清晰背景與畫面集中化) ---
 st.set_page_config(page_title="💎 AI 決策系統", layout="centered")
@@ -71,19 +70,24 @@ if not st.session_state.login:
             st.error("金鑰錯誤")
     st.stop()
 
-# --- 4. 主內容 (房號可選，不阻擋畫面) ---
+# --- 4. 主內容 ---
 st.markdown("<h2 style='text-align: center;'>💎 私人俱樂部</h2>", unsafe_allow_html=True)
 
 st.sidebar.header("📌 桌面資訊")
-room_id = st.sidebar.text_input("輸入房號 (選填)", value="", placeholder="")
+# ⭐ 房號保持完全空白預設
+room_id = st.sidebar.text_input("請輸入房號", value="", placeholder="")
 
 if st.sidebar.button("🧹 換桌重置"):
-    st.session_state.history = []; st.session_state.win_count = 0; st.session_state.next_pred = None; st.rerun()
+    st.session_state.history = []; st.session_state.next_pred = None; st.rerun()
 
-display_room = f"📡 正在監控：{room_id}" if room_id else "📡 AI 算力連線中"
-st.markdown(f"<div style='text-align: center; font-size:24px; color:#FFD700;'>{display_room}</div>", unsafe_allow_html=True)
+# --- 🔒 房號強制檢查門檻 ---
+if not room_id:
+    st.warning("⚠️ 請先在左側輸入房號，以啟動 AI 運算系統。")
+    st.stop() # 沒填房號，後面的程式碼完全不執行
 
-# --- 5. 核心決策 ---
+# --- 5. 核心決策 (填完房號才看的到) ---
+st.markdown(f"<div style='text-align: center; font-size:28px; color:#FFD700;'>📡 正在監控：{room_id}</div>", unsafe_allow_html=True)
+
 count = len(st.session_state.history)
 if count < 5:
     st.markdown(f"<p style='text-align: center; margin-top:5px;'>📥 數據同步中 ({count}/5)</p>", unsafe_allow_html=True)
