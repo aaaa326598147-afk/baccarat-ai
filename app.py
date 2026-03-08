@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 import base64
 
-# --- 1. 初始化 (2026-03-08 密碼為 0308) ---
+# --- 1. 初始化 ---
 now = datetime.now()
 today_str = now.strftime("%Y-%m-%d")
 today_code = now.strftime("%m%d")
@@ -15,7 +15,7 @@ if 'history' not in st.session_state: st.session_state.history = []
 if 'next_pred' not in st.session_state: st.session_state.next_pred = None
 if 'win_count' not in st.session_state: st.session_state.win_count = 0
 
-# --- 2. 主介面設定 (高清晰背景) ---
+# --- 2. 主介面設定 (高清晰背景與畫面集中化) ---
 st.set_page_config(page_title="💎 AI 決策系統", layout="centered")
 
 cover_image_path = "cover.jpg"
@@ -39,17 +39,28 @@ if os.path.exists(cover_image_path):
             background-color: rgba(0, 0, 0, 0.05); 
             z-index: -1;
         }}
-        /* 全域文字強化 */
+        /* ⭐ 畫面集中化優化：縮小元件間距 */
+        .block-container {{
+            padding-top: 2rem !important;
+            padding-bottom: 0rem !important;
+            max-width: 500px !important; /* 讓畫面在寬螢幕也保持集中 */
+        }}
+        div[data-testid="stVerticalBlock"] > div {{
+            gap: 0.5rem !important;
+        }}
+        
+        /* 文字強化 */
         h1, h2, h3, .stMetric, p, span, div, label, .stCaption {{
             color: #FFFFFF !important;
             text-shadow: 3px 3px 5px #000, -1px -1px 0 #000, 1px -1px 0 #000 !important;
             font-weight: 800 !important;
         }}
-        /* 按鈕高度與透明度優化 */
+        /* 按鈕高度優化 */
         div.stButton > button {{
             background-color: rgba(0,0,0,0.6) !important;
             border: 2px solid #FFFFFF !important;
-            height: 3em !important;
+            height: 3.5em !important;
+            margin-bottom: 5px !important;
         }}
         .stSidebar {{ background-color: rgba(0,0,0,0.85); }}
         </style>
@@ -69,12 +80,11 @@ if not st.session_state.login:
             st.rerun()
     st.stop()
 
-# --- 4. 主內容 ---
-st.title("💎 私人俱樂部：決策輔助工具")
-st.caption(f"🚀 AI 實時數據運算中 | {today_str}")
+# --- 4. 主內容 (集中顯示) ---
+st.markdown("<h2 style='text-align: center;'>💎 私人俱樂部</h2>", unsafe_allow_html=True)
 
 st.sidebar.header("📌 桌面資訊")
-room_id = st.sidebar.text_input("請輸入房號", value="", placeholder="") # 房號無預設
+room_id = st.sidebar.text_input("請輸入房號", value="", placeholder="")
 
 if st.sidebar.button("🧹 換桌重置"):
     st.session_state.history = []; st.session_state.win_count = 0; st.session_state.next_pred = None; st.rerun()
@@ -83,13 +93,13 @@ if not room_id:
     st.warning("👈 請先輸入房號以開始。")
     st.stop()
 
-# 房號顯示加大
-st.markdown(f"### 📡 正在監控：<span style='font-size:32px; color:#FFD700;'>{room_id}</span>", unsafe_allow_html=True)
+# 房號顯示：置中且加大
+st.markdown(f"<div style='text-align: center;'>📡 正在監控：<span style='font-size:36px; color:#FFD700;'>{room_id}</span></div>", unsafe_allow_html=True)
 
 # --- 5. 核心決策 ---
 count = len(st.session_state.history)
 if count < 5:
-    st.subheader(f"📥 數據同步中 ({count}/5)")
+    st.markdown(f"<p style='text-align: center;'>📥 數據同步中 ({count}/5)</p>", unsafe_allow_html=True)
     st.progress(count / 5)
 else:
     if st.session_state.next_pred is None:
@@ -101,10 +111,9 @@ else:
     c1, c2 = st.columns(2)
     with c1: st.metric("核心推薦", f"🔴 {current_p}" if current_p == "莊" else f"🔵 {current_p}")
     with c2: st.metric("信心值", f"{confidence}%")
-    st.divider()
 
-# --- 6. 操作按鈕 (特效已關閉) ---
-st.write(f"### 📢 記錄開出結果")
+# --- 6. 操作按鈕 ---
+st.markdown("<p style='text-align: center; margin-top: 10px;'>📢 記錄結果</p>", unsafe_allow_html=True)
 col1, col2, col3 = st.columns([2, 1, 2])
 
 def handle_click(res):
@@ -113,9 +122,8 @@ def handle_click(res):
             st.session_state.win_count += 1
         st.session_state.next_pred = random.choice(["莊", "閒"])
     st.session_state.history.append(res)
-    # 只保留最近 10 局紀錄避免介面過長
     if len(st.session_state.history) > 10: st.session_state.history.pop(0)
-    time.sleep(0.3)
+    time.sleep(0.2)
     st.rerun()
 
 with col1:
@@ -125,15 +133,10 @@ with col2:
 with col3:
     if st.button("🔵 閒", use_container_width=True): handle_click("閒")
 
-# --- 7. 下方金額計算機 ---
-st.write("---")
-st.subheader("🧮 智能注碼計算機")
-with st.expander("🛡️ 風險管理", expanded=True):
+# --- 7. 下方金額計算機 (收納顯示) ---
+with st.expander("🧮 智能注碼計算機", expanded=True):
     balance = st.number_input("💵 本金", value=10000, step=1000)
     risk = st.slider("⚖️ 下注 %", 1, 10, 2)
-    st.success(f"💡 建議下注金額：**{int(balance * (risk / 100))}**")
+    st.success(f"💡 建議下注：**{int(balance * (risk / 100))}**")
 
-# --- 8. 手機端安全墊 ---
-st.write("")
-st.write("")
-st.write("")
+st.write("") # 底部緩衝
