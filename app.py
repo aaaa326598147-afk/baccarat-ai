@@ -4,30 +4,31 @@ from datetime import datetime
 import os
 import base64
 
-# --- 1. 核心邏輯 (強化數字隨機性) ---
-def get_final_analysis(history):
+# --- 1. 核心邏輯 (強化高低落差與風險連動) ---
+def get_final_analysis(history, win_streak):
     if len(history) < 5: 
-        # 未滿5局，數字在較低區間跳動，且每次都不一樣
-        return "⏳ 雲端數據校準中...", 1, random.randint(32, 58), False
+        return "⏳ 雲端數據校準中...", random.randint(32, 58)
     
-    # 滿5局後，根據規律計算信心度，並加入隨機偏移量
     path = "".join(history[-10:]) 
     last_4 = "".join(history[-4:])
     
-    # 基礎機率 + 隨機偏移 (ensure numbers are never the same)
-    offset = random.choice([-3, -2, -1, 1, 2, 3, 5])
-    
+    # 根據規律設定信心度基礎值
     if "莊莊莊莊" in path or "閒閒閒閒" in path:
-        return "🐉 偵測到【長龍規律】，穩定獲利中", 2, 90 + offset, True
-    if last_4 == "莊莊閒閒" or last_4 == "閒閒莊莊":
-        return "👯 偵測到【雙跳規律】，建議持續跟對", 2, 82 + offset, True
-    if "莊閒莊閒" in last_4 or "閒莊閒莊" in last_4:
-        return "🎯 偵測到【單跳規律】，建議跟跳", 2, 85 + offset, True
+        base_conf = random.randint(91, 98) # 長龍強規律
+    elif last_4 in ["莊莊閒閒", "閒閒莊莊", "莊閒莊閒", "閒莊閒莊"]:
+        base_conf = random.randint(81, 89) # 穩定規律
+    else:
+        # 無明顯規律時，趴數隨機在 45-68% 之間跳動，呈現不穩定感
+        base_conf = random.randint(45, 68)
+    
+    # 風險修正：連贏增加信心，預測失敗則大幅扣除信心
+    if win_streak >= 2: base_conf = min(base_conf + 5, 99)
+    elif win_streak < 0: base_conf = max(base_conf - 20, 31)
         
-    return "✅ 盤勢重整中，建議輕倉觀望", 1, random.randint(45, 68), False
+    return "🎯 偵測到強規律" if base_conf > 75 else "✅ 盤勢穩定運算中" if base_conf > 60 else "⚠️ 建議輕倉觀望", base_conf
 
-# --- 2. 奢華 CSS ---
-st.set_page_config(page_title="VIP AI-Pro V12.2", layout="centered")
+# --- 2. 奢華 CSS (徹底移除陰影，鎖定實色) ---
+st.set_page_config(page_title="VIP AI-Pro V12.4", layout="centered")
 
 def get_base64(path):
     if os.path.exists(path):
@@ -38,23 +39,28 @@ bg = get_base64("cover.jpg")
 st.markdown(
     f"""
     <style>
-    @keyframes hot-glow-bar {{
-        0% {{ box-shadow: 0 0 8px #FFD700; border: 1px solid #FFD700; }}
-        50% {{ box-shadow: 0 0 25px #FFD700; border: 1px solid #FFFFFF; }}
-        100% {{ box-shadow: 0 0 8px #FFD700; border: 1px solid #FFD700; }}
-    }}
     .stApp {{ background-image: url("data:image/jpeg;base64,{bg}"); background-size: cover !important; }}
+    
+    /* 白色橫條保持簡約 */
     .white-bar {{
         background: #FFFFFF !important; border-radius: 50px; padding: 12px; text-align: center;
-        color: #000000 !important; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-bottom: 12px;
+        color: #000000 !important; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 12px;
     }}
-    .hot-glow-active {{ animation: hot-glow-bar 1.5s infinite ease-in-out !important; background: linear-gradient(90deg, #FFFFFF, #FFD700, #FFFFFF) !important; }}
-    .gold-number {{ color: #D4AF37 !important; font-size: 110px !important; font-weight: 900; text-align: center; margin: 5px 0; letter-spacing: -2px; }}
-    .viewer-box {{ text-align: center; background: rgba(0, 0, 0, 0.5); border-radius: 20px; padding: 5px 15px; width: fit-content; margin: 0 auto 15px auto; border: 1px solid rgba(255, 215, 0, 0.2); }}
+    
+    /* 核心文字樣式：移除所有 text-shadow */
+    .big-font {{
+        font-size: 110px !important; font-weight: 900 !important; 
+        text-align: center; margin: -20px 0; text-shadow: none !important;
+    }}
+    
+    .gold-number {{ color: #D4AF37 !important; font-size: 110px !important; font-weight: 900; text-align: center; margin: 5px 0; text-shadow: none !important; }}
+    .viewer-box {{ text-align: center; background: rgba(0, 0, 0, 0.5); border-radius: 20px; padding: 5px 15px; width: fit-content; margin: 0 auto 15px auto; }}
     .viewer-count {{ color: #F8D06E !important; font-size: 13px; font-weight: bold; }}
+    
+    /* 路紙背景 */
     .road-map-container {{
         display: grid; grid-template-rows: repeat(6, 42px); grid-auto-flow: column; grid-auto-columns: 42px; gap: 8px; 
-        background: rgba(0, 0, 0, 0.6) !important; backdrop-filter: blur(10px); border-radius: 30px; padding: 20px; overflow-x: auto; min-height: 310px; margin: 15px 0; border: 1px solid rgba(212, 175, 55, 0.2);
+        background: rgba(0, 0, 0, 0.6) !important; backdrop-filter: blur(10px); border-radius: 30px; padding: 20px; overflow-x: auto; min-height: 310px; margin: 15px 0;
     }}
     header, footer {{ visibility: hidden; }}
     </style>
@@ -70,20 +76,15 @@ if 'next_pred' not in st.session_state: st.session_state.next_pred = None
 if 'locked_room' not in st.session_state: st.session_state.locked_room = None
 if 'viewers' not in st.session_state: st.session_state.viewers = random.randint(182, 235)
 
-if random.random() < 0.7:
-    st.session_state.viewers += random.choice([-2, -1, 1, 2, 3])
-
 # --- 4. 登入 ---
 if not st.session_state.login:
     st.markdown("<br><br><br><h1 style='text-align:center; color:white;'>VIP 系統登入</h1>", unsafe_allow_html=True)
     pwd = st.text_input("PASSWORD", type="password", placeholder="請輸入密碼")
     if st.button("啟動系統", use_container_width=True):
-        if pwd == datetime.now().strftime("%m%d"): 
-            st.session_state.login = True
-            st.rerun()
+        if pwd == datetime.now().strftime("%m%d"): st.session_state.login = True; st.rerun()
     st.stop()
 
-# --- 5. 呈現 ---
+# --- 5. 數據中心 ---
 st.markdown('<h1 style="text-align:center; color:white; margin-bottom:5px; letter-spacing:2px;">數據中心</h1>', unsafe_allow_html=True)
 st.markdown(f'<div class="viewer-box"><span class="viewer-count">● 雲端連線監控中：{st.session_state.viewers} 名 VIP</span></div>', unsafe_allow_html=True)
 
@@ -93,30 +94,31 @@ if st.session_state.locked_room is None:
     if sel_room != rooms[0]: st.session_state.locked_room = sel_room; st.rerun()
     st.stop()
 
-insight_text, _, conf_val, is_hot = get_final_analysis(st.session_state.history)
+insight_text, conf_val = get_final_analysis(st.session_state.history, st.session_state.win_streak)
 cnt = len(st.session_state.history)
-glow_style = "hot-glow-active" if is_hot else ""
-st.markdown(f'<div class="white-bar {glow_style}">● {st.session_state.locked_room} 監控中 ({cnt}/5)</div>', unsafe_allow_html=True)
+
+st.markdown(f'<div class="white-bar">● {st.session_state.locked_room} 監控中 ({cnt}/5)</div>', unsafe_allow_html=True)
 
 if cnt >= 5:
     if st.session_state.next_pred is None: st.session_state.next_pred = random.choice(["莊", "閒"])
     
-    # 莊閒大字：固定顏色
-    pred_color = "#FF1A1A" if st.session_state.next_pred == "莊" else "#1C83E1"
+    # 莊閒大字：絕對實色 (無發光)
+    pred_color = "#FF0000" if st.session_state.next_pred == "莊" else "#0000FF"
     
-    # 趴數數字：信心度隨機且大於 60% 紅色，其餘黑色
-    conf_text_color = "#FF1A1A" if conf_val > 60 else "#000000"
+    # 趴數：> 60% 紅色，≤ 60% 黑色
+    conf_color = "#FF0000" if conf_val > 60 else "#000000"
     
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>AI 智能預測</p><p style='color:{pred_color}!important; font-size:100px; font-weight:900; text-align:center; margin-top:-15px;'>{st.session_state.next_pred}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>AI 智能預測</p><p class='big-font' style='color:{pred_color}!important;'>{st.session_state.next_pred}</p>", unsafe_allow_html=True)
     with c2:
-        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>分析信心度</p><p style='color:{conf_text_color}!important; font-size:100px; font-weight:900; text-align:center; margin-top:-15px;'>{conf_val}%</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>分析信心度</p><p class='big-font' style='color:{conf_color}!important;'>{conf_val}%</p>", unsafe_allow_html=True)
 
 # 珠盤路
-road_inner = "".join([f'<div style="width:38px; height:38px; border-radius:50%; background:{"#ff4b4b" if i=="莊" else "#1c83e1" if i=="閒" else "#28a745"}; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">{i}</div>' for i in st.session_state.history])
+road_inner = "".join([f'<div style="width:38px; height:38px; border-radius:50%; background:{"#FF4B4B" if i=="莊" else "#1C83E1" if i=="閒" else "#28A745"}; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">{i}</div>' for i in st.session_state.history])
 st.markdown(f'<div class="road-map-container">{road_inner}</div>', unsafe_allow_html=True)
 
+# 按鈕
 b1, b2, b3 = st.columns([2, 1, 2])
 def update_step(r):
     if r != "和" and st.session_state.next_pred:
@@ -130,7 +132,7 @@ if b3.button("🔵 閒 家", use_container_width=True): update_step("閒"); st.r
 
 st.markdown(f"<div class='white-bar' style='margin-top: 15px;'>📝 {insight_text}</div>", unsafe_allow_html=True)
 
-# 金額區
+# 分配金額
 if cnt >= 5:
     st.markdown('<div style="background:white; border-radius:50px; padding:8px 40px; color:black; font-weight:900; margin:20px auto; display:table;">⚖️ 建議分配金額</div>', unsafe_allow_html=True)
     bal = st.number_input("本金", value=10000, label_visibility="collapsed")
@@ -139,5 +141,6 @@ if cnt >= 5:
         st.markdown(f'<p class="gold-number">{int(bal*0.02*u)}</p>', unsafe_allow_html=True)
     else: st.markdown('<p class="gold-number" style="opacity:0.2;">0</p>', unsafe_allow_html=True)
 
-if st.button("掃描完成 / 更換桌號", use_container_width=True):
+if st.button("更換桌號", use_container_width=True):
     st.session_state.history = []; st.session_state.win_streak = 0; st.session_state.losses = 0; st.session_state.next_pred = None; st.session_state.locked_room = None; st.rerun()
+    
