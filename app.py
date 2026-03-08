@@ -18,8 +18,8 @@ def get_final_analysis(history):
         return "🎯 偵測到【單跳規律】，建議跟跳", 2, random.randint(90, 97), True
     return "✅ 盤勢重整中，建議輕倉觀望", 1, random.randint(38, 62), False
 
-# --- 2. 奢華 CSS ---
-st.set_page_config(page_title="VIP AI-Pro V12.0", layout="centered")
+# --- 2. 奢華 CSS (移除發光，鎖定配色) ---
+st.set_page_config(page_title="VIP AI-Pro V12.1", layout="centered")
 
 def get_base64(path):
     if os.path.exists(path):
@@ -54,10 +54,10 @@ st.markdown(
         padding: 5px 15px; width: fit-content; margin: 0 auto 15px auto; border: 1px solid rgba(255, 215, 0, 0.2);
     }}
     .viewer-count {{
-        color: #F8D06E !important; font-size: 13px; font-weight: bold; 
-        text-shadow: 1px 1px 2px rgba(0,0,0,1); letter-spacing: 1px;
+        color: #F8D06E !important; font-size: 13px; font-weight: bold; letter-spacing: 1px;
     }}
     
+    /* 珠盤路保持透明質感 */
     .road-map-container {{
         display: grid; grid-template-rows: repeat(6, 42px); grid-auto-flow: column; grid-auto-columns: 42px; gap: 8px; 
         background: rgba(0, 0, 0, 0.6) !important; backdrop-filter: blur(10px); 
@@ -68,7 +68,7 @@ st.markdown(
     """, unsafe_allow_html=True
 )
 
-# --- 3. 初始化 & 自動擬真跳動 ---
+# --- 3. 初始化 ---
 if 'login' not in st.session_state: st.session_state.login = False
 if 'history' not in st.session_state: st.session_state.history = []
 if 'win_streak' not in st.session_state: st.session_state.win_streak = 0
@@ -111,23 +111,17 @@ st.markdown(f'<div class="white-bar {glow_style}">● {st.session_state.locked_r
 if cnt >= 5:
     if st.session_state.next_pred is None: st.session_state.next_pred = random.choice(["莊", "閒"])
     
-    # 【核心改進】始終保持顏色，高趴數觸發發光效果
-    if st.session_state.next_pred == "莊":
-        # 始終紅色，高趴數轉亮紅+發光
-        main_color = "#FF1A1A" if conf_val > 60 else "#B32424"
-        glow_effect = "text-shadow: 0 0 20px rgba(255,26,26,0.8);" if conf_val > 60 else "text-shadow: 2px 2px 4px rgba(0,0,0,0.5);"
-    else:
-        # 始終藍色，高趴數轉亮藍+發光
-        main_color = "#1A8CFF" if conf_val > 60 else "#1A4D80"
-        glow_effect = "text-shadow: 0 0 20px rgba(26,140,255,0.8);" if conf_val > 60 else "text-shadow: 2px 2px 4px rgba(0,0,0,0.5);"
-
-    conf_color = "#28a745" if conf_val > 80 else "#ffc107" if conf_val > 55 else "#6c757d"
+    # 莊閒大字：固定顏色，無發光
+    pred_color = "#FF1A1A" if st.session_state.next_pred == "莊" else "#1C83E1"
+    
+    # 趴數數字：高於 60% 紅色，低於 60% 黑色
+    conf_text_color = "#FF1A1A" if conf_val > 60 else "#000000"
     
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>AI 智能預測</p><p style='color:{main_color}!important; font-size:95px; font-weight:900; text-align:center; margin-top:-15px; {glow_effect}'>{st.session_state.next_pred}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>AI 智能預測</p><p style='color:{pred_color}!important; font-size:100px; font-weight:900; text-align:center; margin-top:-15px; text-shadow:none;'>{st.session_state.next_pred}</p>", unsafe_allow_html=True)
     with c2:
-        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>分析信心度 {'🔥' if is_hot else ''}</p><p style='color:{conf_color}!important; font-size:95px; font-weight:900; text-align:center; margin-top:-10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);'>{conf_val}%</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>分析信心度 {'🔥' if is_hot else ''}</p><p style='color:{conf_text_color}!important; font-size:100px; font-weight:900; text-align:center; margin-top:-15px; text-shadow:none;'>{conf_val}%</p>", unsafe_allow_html=True)
 
 # 珠盤路
 road_inner = ""
@@ -166,5 +160,5 @@ if cnt >= 5:
         st.markdown(f'<p class="gold-number">{int(bal*(0.02)*u)}</p>', unsafe_allow_html=True)
     else: st.markdown('<p class="gold-number" style="opacity:0.2;">0</p>', unsafe_allow_html=True)
 
-if st.button("🧹 清除記錄 / 更換桌號", use_container_width=True):
+if st.button("掃描完成 / 更換桌號", use_container_width=True):
     st.session_state.history = []; st.session_state.win_streak = 0; st.session_state.losses = 0; st.session_state.next_pred = None; st.session_state.locked_room = None; st.rerun()
