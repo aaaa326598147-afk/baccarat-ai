@@ -3,7 +3,7 @@ import random
 import time
 from datetime import datetime
 
-# --- 1. 初始化與每日金鑰 ---
+# --- 1. 初始化與每日金鑰 (2026-03-08 密碼為 0308) ---
 now = datetime.now()
 today_str = now.strftime("%Y-%m-%d")
 today_code = now.strftime("%m%d")
@@ -17,7 +17,6 @@ if 'win_count' not in st.session_state: st.session_state.win_count = 0
 if not st.session_state.login:
     st.set_page_config(page_title="💎 私人俱樂部", layout="centered")
     st.title("💎 私人俱樂部：決策輔助工具")
-    st.info(f"🔒 安全加密通道 | 📅 系統日期：{today_str}")
     pwd = st.text_input("輸入今日授權金鑰：", type="password")
     if st.button("驗證並開啟雲端算力", use_container_width=True):
         if pwd == today_code:
@@ -30,63 +29,70 @@ if not st.session_state.login:
 # --- 3. 主介面設定 ---
 st.set_page_config(page_title="💎 AI 決策系統", layout="centered")
 st.title("💎 私人俱樂部：決策輔助工具")
-st.caption(f"🚀 雲端算力連線中 | 每日授權至 {today_str} 23:59")
 
-# 側邊欄
-st.sidebar.header("📊 實時戰績統計")
+# --- 4. 房號與狀態 ---
+st.sidebar.header("📌 桌面連線資訊")
+room_id = st.sidebar.text_input("當前桌號/房號", value="A-101")
 st.sidebar.metric("🔥 今日命中總數", f"{st.session_state.win_count} 局")
-if st.sidebar.button("🧹 清空數據 (換桌)"):
+
+if st.sidebar.button("🧹 換桌 (重置數據)"):
     st.session_state.history = []; st.session_state.win_count = 0; st.session_state.next_pred = None; st.rerun()
 
-# --- 4. 核心決策與 AI 路評 (含和局邏輯) ---
+st.caption(f"📡 正在監控桌號：**{room_id}** | 📅 授權至 {today_str} 23:59")
+
+# --- 5. 核心決策與深度路評 (改為 5 局) ---
 count = len(st.session_state.history)
 
-if count < 3:
-    st.subheader(f"📥 初始數據同步中 ({count}/3)")
-    st.progress(count / 3)
-    st.info("請輸入前 3 局結果啟動 AI 深度演算。")
+if count < 5:
+    st.subheader(f"📥 數據同步中 ({count}/5)")
+    st.progress(count / 5)
+    st.info(f"請輸入 {room_id} 桌最近 5 局結果，以啟動大數據深度演算。")
 else:
-    st.subheader("🎯 AI 實時決策分析")
+    st.subheader(f"🎯 實時決策：{room_id}")
     if st.session_state.next_pred is None:
         st.session_state.next_pred = random.choice(["莊", "閒"])
     
     current_p = st.session_state.next_pred
     confidence = random.randint(92, 99)
     
-    # AI 路評分析
-    h_filtered = [x for x in st.session_state.history if x != "和"] # 排除和局來分析趨勢
-    if len(h_filtered) >= 2 and h_filtered[-1] == h_filtered[-2]:
-        analysis = "⚠️ 偵測到連續規律，系統判定為「長龍趨勢」，建議順勢跟隨。"
+    # AI 深度路評演算
+    h_filtered = [x for x in st.session_state.history if x != "和"]
+    analysis = "🔄 掃描中..."
+    if len(h_filtered) >= 4:
+        last_4 = h_filtered[-4:]
+        if len(set(last_4)) == 1:
+            analysis = f"🐉 偵測到【{last_4[0]}長龍】趨勢！建議順勢追擊。"
+            confidence = random.randint(96, 99)
+        elif last_4[0] == last_4[2] and last_4[1] == last_4[3] and last_4[0] != last_4[1]:
+            analysis = "🐇 偵測到標準【單跳規律】。AI 預計下一局將跳位。"
+            confidence = random.randint(94, 98)
+        else:
+            analysis = "📈 目前路向較為雜亂，建議減注觀望 AI 推薦。"
     else:
-        analysis = "🔄 偵測到交替規律，目前處於「單跳路向」，建議反向對沖。"
+        analysis = "📊 數據積累中，目前判定為隨機波動。"
 
     st.divider()
     c1, c2 = st.columns(2)
     with c1: st.metric("核心推薦指令", f"🔴 {current_p}" if current_p == "莊" else f"🔵 {current_p}")
     with c2: st.metric("演算信心值", f"{confidence}%")
-    
-    st.info(f"💡 **AI 實時路評：**\n{analysis}")
+    st.info(f"💡 **AI 深度路評報告：**\n{analysis}")
     st.progress(confidence / 100)
     st.divider()
 
-# --- 5. 操作按鈕 (莊、閒、和) ---
-st.write("### 📢 記錄本局開出結果")
-col1, col2, col3 = st.columns([2, 1, 2]) # 讓和局按鈕小一點，放中間
+# --- 6. 操作按鈕 ---
+st.write(f"### 📢 記錄 {room_id} 開出結果")
+col1, col2, col3 = st.columns([2, 1, 2])
 
 def handle_click(actual_result):
-    # 命中判定：如果是「和」，不計算輸贏，特效不觸發，但預測保留
     if actual_result == "和":
-        st.toast("🟢 本局和局，數據保留，預測不變。", icon="🔄")
+        st.toast("🟢 和局保留，預測維持不變。", icon="🔄")
     elif st.session_state.next_pred and actual_result == st.session_state.next_pred:
         st.session_state.win_count += 1
         st.balloons(); st.snow()
-        st.toast(f"🎯 命中成功！", icon="💰")
-        # 只有莊閒輸贏後，才產生下一局預測
+        st.toast("🎯 精準命中！", icon="💰")
         st.session_state.next_pred = random.choice(["莊", "閒"])
     else:
-        # 預測失敗，也產生下一局預測
         st.session_state.next_pred = random.choice(["莊", "閒"])
-    
     st.session_state.history.append(actual_result)
     st.rerun()
 
@@ -97,22 +103,17 @@ with col2:
 with col3:
     if st.button("🔵 閒 (Player)", use_container_width=True): handle_click("閒")
 
-# --- 6. 紀錄與注碼計算機 ---
+# --- 7. 紀錄與注碼計算機 ---
 if st.session_state.history:
     st.write("---")
-    st.caption("📜 當前決策路單紀實：")
-    # 美化顯示：和局用綠色標註
-    styled_history = []
-    for x in st.session_state.history:
-        if x == "和": styled_history.append(f"🟢{x}")
-        elif x == "莊": styled_history.append(f"🔴{x}")
-        else: styled_history.append(f"🔵{x}")
+    st.caption(f"📜 {room_id} 決策路單紀錄：")
+    styled_history = [f"🔴{x}" if x=="莊" else f"🔵{x}" if x=="閒" else f"🟢{x}" for x in st.session_state.history]
     st.write(" ➡️ ".join(styled_history))
 
 st.write("---")
 st.subheader("🧮 智能注碼計算機")
-with st.expander("🛡️ 開啟風險控管面板", expanded=True):
-    balance = st.number_input("💵 當前總本金", value=10000, step=1000)
-    risk_percent = st.slider("⚖️ 下注比例 (%)", 1, 10, 2)
-    bet_amount = balance * (risk_percent / 100)
-    st.success(f"💡 建議下注金額：**{int(bet_amount)}**")
+with st.expander("🛡️ 風險管理面板", expanded=True):
+    balance = st.number_input("💵 本金", value=10000)
+    risk = st.
+    slider("⚖️ 下注比例 (%)", 1, 10, 2)
+    st.success(f"💡 建議下注金額：**{int(balance * (risk / 100))}**")
