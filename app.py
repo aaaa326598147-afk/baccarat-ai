@@ -18,8 +18,8 @@ def get_final_analysis(history):
         return "🎯 偵測到【單跳規律】，建議跟跳", 2, random.randint(90, 97), True
     return "✅ 盤勢重整中，建議輕倉觀望", 1, random.randint(38, 62), False
 
-# --- 2. 奢華 CSS (優化透明度與毛玻璃效果) ---
-st.set_page_config(page_title="VIP AI-Pro V11.5", layout="centered")
+# --- 2. 奢華 CSS (焦點配色優化) ---
+st.set_page_config(page_title="VIP AI-Pro V11.7", layout="centered")
 
 def get_base64(path):
     if os.path.exists(path):
@@ -36,6 +36,7 @@ st.markdown(
         100% {{ box-shadow: 0 0 8px #FFD700; border: 1px solid #FFD700; }}
     }}
     .stApp {{ background-image: url("data:image/jpeg;base64,{bg}"); background-size: cover !important; }}
+    
     .white-bar {{
         background: #FFFFFF !important; border-radius: 50px; padding: 12px; text-align: center;
         color: #000000 !important; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-bottom: 12px;
@@ -57,21 +58,10 @@ st.markdown(
         text-shadow: 1px 1px 2px rgba(0,0,0,1); letter-spacing: 1px;
     }}
     
-    /* 珠盤路透明度與毛玻璃優化 */
     .road-map-container {{
-        display: grid; 
-        grid-template-rows: repeat(6, 42px); 
-        grid-auto-flow: column; 
-        grid-auto-columns: 42px; 
-        gap: 8px; 
-        background: rgba(0, 0, 0, 0.6) !important; /* 降低不透明度至 0.6 */
-        backdrop-filter: blur(10px); /* 增加背景模糊，提升質感 */
-        border-radius: 30px; 
-        padding: 20px; 
-        overflow-x: auto; 
-        min-height: 310px; 
-        margin: 15px 0; 
-        border: 1px solid rgba(212, 175, 55, 0.2);
+        display: grid; grid-template-rows: repeat(6, 42px); grid-auto-flow: column; grid-auto-columns: 42px; gap: 8px; 
+        background: rgba(0, 0, 0, 0.6) !important; backdrop-filter: blur(10px); 
+        border-radius: 30px; padding: 20px; overflow-x: auto; min-height: 310px; margin: 15px 0; border: 1px solid rgba(212, 175, 55, 0.2);
     }}
 
     header, footer {{ visibility: hidden; }}
@@ -90,8 +80,6 @@ if 'viewers' not in st.session_state: st.session_state.viewers = random.randint(
 
 if random.random() < 0.7:
     st.session_state.viewers += random.choice([-2, -1, 1, 2, 3])
-    if st.session_state.viewers < 150: st.session_state.viewers = 160
-    if st.session_state.viewers > 350: st.session_state.viewers = 340
 
 # --- 4. 登入系統 ---
 if not st.session_state.login:
@@ -123,20 +111,24 @@ st.markdown(f'<div class="white-bar {glow_style}">● {st.session_state.locked_r
 
 if cnt >= 5:
     if st.session_state.next_pred is None: st.session_state.next_pred = random.choice(["莊", "閒"])
+    # 僅針對大字進行配色優化
     pcol = "#ff4b4b" if st.session_state.next_pred == "莊" else "#1c83e1"
     conf_color = "#28a745" if conf_val > 80 else "#ffc107" if conf_val > 55 else "#6c757d"
+    
     c1, c2 = st.columns(2)
-    c1.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>AI 智能預測</p><p style='color:{pcol}!important; font-size:80px; font-weight:900; text-align:center; margin-top:-10px;'>{st.session_state.next_pred}</p>", unsafe_allow_html=True)
-    c2.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>分析信心度 {'🔥' if is_hot else ''}</p><p style='color:{conf_color}!important; font-size:80px; font-weight:900; text-align:center; margin-top:-10px;'>{conf_val}%</p>", unsafe_allow_html=True)
+    with c1:
+        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>AI 智能預測</p><p style='color:{pcol}!important; font-size:80px; font-weight:900; text-align:center; margin-top:-10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);'>{st.session_state.next_pred}</p>", unsafe_allow_html=True)
+    with c2:
+        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>分析信心度 {'🔥' if is_hot else ''}</p><p style='color:{conf_color}!important; font-size:80px; font-weight:900; text-align:center; margin-top:-10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);'>{conf_val}%</p>", unsafe_allow_html=True)
 
-# 珠盤路 (套用新的路紙 CSS)
+# 珠盤路
 road_inner = ""
 for item in st.session_state.history:
     color = "#ff4b4b" if item == "莊" else "#1c83e1" if item == "閒" else "#28a745"
     road_inner += f'<div style="width:38px; height:38px; border-radius:50%; background:{color}; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">{item}</div>'
 st.markdown(f'<div class="road-map-container">{road_inner}</div>', unsafe_allow_html=True)
 
-# 操作按鈕
+# 操作按鈕 (維持標準樣式，不影響視覺平衡)
 b1, b2, b3 = st.columns([2, 1, 2])
 def update_step(r):
     if r != "和" and st.session_state.next_pred:
