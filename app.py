@@ -29,37 +29,40 @@ if os.path.exists(cover_image_path):
             background-image: url("data:image/jpeg;base64,{data}");
             background-size: cover; background-position: center top; background-attachment: fixed;
         }}
-        .block-container {{ padding-top: 2rem !important; max-width: 500px !important; }}
+        .block-container {{ padding-top: 1.5rem !important; max-width: 550px !important; }}
         
-        /* ⭐ 核心：還原截圖中的文字浮雕感 */
+        /* ⭐ 還原浮雕立體字：白色厚度 + 深色散影 */
         h1, h2, h3, .stMetric, p, span, label, div {{
             color: #FFFFFF !important;
             font-family: "Microsoft JhengHei", sans-serif !important;
             font-weight: 900 !important;
             text-shadow: 
-                2px 2px 0px #666,  /* 淺灰色厚度 */
-                4px 4px 8px rgba(0,0,0,0.8) !important; /* 深色散影 */
+                2px 2px 0px #666,  
+                4px 4px 8px rgba(0,0,0,0.8) !important;
         }}
 
-        /* ⭐ 僅修正下拉選單：改為淡灰色，不遮擋文字 */
+        /* 選單背景修正：半透明淡灰，不遮擋文字 */
         div[data-baseweb="select"] > div {{
-            background-color: rgba(255, 255, 255, 0.2) !important; /* 淺色透明底 */
-            border: 1px solid #FFFFFF !important;
-            border-radius: 8px !important;
+            background-color: rgba(255, 255, 255, 0.15) !important;
+            border: 1.5px solid #FFFFFF !important;
+            border-radius: 10px !important;
         }}
         
-        /* 下拉選單內的選項：維持白底黑字確保看清 */
-        div[data-baseweb="popover"] ul {{
-            background-color: #FFFFFF !important;
-        }}
-        div[data-baseweb="popover"] li {{
-            color: #333333 !important;
-            font-weight: bold !important;
-            text-shadow: none !important; /* 選項內不加陰影 */
+        /* 玻璃質感容器：讓路評與計算機背景清晰 */
+        .glass-box {{
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px; padding: 15px; margin: 10px 0;
         }}
 
-        /* 隱藏原生側邊欄 */
-        [data-testid="stSidebar"] {{ display: none; }}
+        /* 按鈕風格 */
+        div.stButton > button {{
+            background: rgba(0, 0, 0, 0.6) !important;
+            color: #FFD700 !important;
+            border: 1.5px solid #FFD700 !important;
+            border-radius: 12px !important;
+            font-weight: 800 !important;
+        }}
         </style>
         """,
         unsafe_allow_html=True
@@ -70,16 +73,16 @@ if not st.session_state.login:
     st.markdown("<br><br><h1 style='text-align: center; font-size: 42px;'>💎 私人俱樂部</h1>", unsafe_allow_html=True)
     col_l, col_m, col_r = st.columns([1, 5, 1])
     with col_m:
-        pwd = st.text_input("金鑰", type="password", label_visibility="collapsed", placeholder="請輸入金鑰")
-        if st.button("驗證進入系統", use_container_width=True):
+        pwd = st.text_input("金鑰", type="password", label_visibility="collapsed", placeholder="請輸入授權金鑰")
+        if st.button("驗證並開啟 AI 核心", use_container_width=True):
             if pwd == today_code:
                 st.session_state.login = True
                 st.rerun()
     st.stop()
 
 # --- 4. 主控台 ---
-st.markdown("<h2 style='text-align: center;'>💎 私人俱樂部</h2>", unsafe_allow_html=True)
-st.markdown(f"<p style='text-align: center; font-size: 14px;'>{today_str} | 雲端 AI 核心</p>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center; margin-bottom:0;'>💎 私人俱樂部</h2>", unsafe_allow_html=True)
+st.markdown(f"<p style='text-align: center; font-size: 14px;'>{today_str} | AI 連線中</p>", unsafe_allow_html=True)
 
 # 房號選擇
 rb_list = [f"RB0{i}" for i in range(1, 8)]
@@ -88,43 +91,42 @@ room_options = ["— 請選擇監控房號 —"] + rb_list + s_list
 selected_room = st.selectbox("房號", options=room_options, label_visibility="collapsed")
 
 if selected_room == "— 請選擇監控房號 —":
-    st.markdown("<div style='text-align: center; padding: 20px;'>⚠️ 請選取房號以同步數據</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; padding: 30px;'>⚠️ 點選上方房號開始同步</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- 5. 數據面板 ---
-st.markdown(f"""
-    <div style='text-align: center; margin-top: 20px;'>
-        <span style='font-size: 14px;'>正在監控：{selected_room}</span><br>
-        <span style='font-size: 32px;'>AI 運算就緒</span>
-    </div>
-""", unsafe_allow_html=True)
+# --- 5. AI 路評 (補回) ---
+if st.session_state.history:
+    history_html = []
+    for x in st.session_state.history[-8:]:
+        color = "#ff4b4b" if x == "莊" else "#1c83e1" if x == "閒" else "#28a745"
+        # 這裡加上白色浮雕效果，確保符號也能看清
+        history_html.append(f"<span style='color:{color}; font-size: 20px; font-weight: 900;'>{x}</span>")
+    
+    st.markdown(
+        f"<div class='glass-box' style='text-align: center;'>"
+        f"{' <span style=\"color:#fff; text-shadow:none;\">▶</span> '.join(history_html)}</div>", 
+        unsafe_allow_html=True
+    )
 
+# --- 6. 核心推薦與數據面板 ---
 count = len(st.session_state.history)
 if count < 5:
-    st.markdown(f"<p style='text-align: center;'>📡 數據同步中 ({count}/5)</p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align: center;'>📡 數據同步進度 ({count}/5)</p>", unsafe_allow_html=True)
     st.progress(count / 5)
 else:
     if st.session_state.next_pred is None:
         st.session_state.next_pred = random.choice(["莊", "閒"])
     current_p = st.session_state.next_pred
     confidence = random.randint(93, 99)
+    
+    st.markdown(f"<div class='glass-box' style='text-align:center;'>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
-    with c1: st.metric("推薦", current_p)
-    with c2: st.metric("信心", f"{confidence}%")
-
-# --- 6. AI 路評 ---
-if st.session_state.history:
-    history_html = []
-    for x in st.session_state.history[-8:]:
-        color = "#ff4b4b" if x == "莊" else "#1c83e1" if x == "閒" else "#28a745"
-        history_html.append(f"<span style='color:{color};'>{x}</span>")
-    st.markdown(
-        f"<div style='text-align: center; margin: 15px 0;'>"
-        f"{' ▶ '.join(history_html)}</div>", 
-        unsafe_allow_html=True
-    )
+    with c1: st.metric("AI 推薦方向", f"🔴 {current_p}" if current_p == "莊" else f"🔵 {current_p}")
+    with c2: st.metric("算力信心指標", f"{confidence}%")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # --- 7. 操作按鈕 ---
+st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 col1, col2, col3 = st.columns([2, 1, 2])
 def handle_click(res):
     if len(st.session_state.history) >= 5:
@@ -139,3 +141,16 @@ with col2:
     if st.button("和", use_container_width=True): handle_click("和")
 with col3:
     if st.button("閒 🔵", use_container_width=True): handle_click("閒")
+
+# --- 8. 智能金額計算機 (補回) ---
+st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+with st.expander("🧮 智能注碼管理 (點擊展開)", expanded=True):
+    st.markdown("<div style='background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px;'>", unsafe_allow_html=True)
+    balance = st.number_input("💵 目前本金", value=10000, step=1000)
+    risk = st.slider("⚖️ 下注風險 %", 1, 10, 2)
+    suggested = int(balance * (risk / 100))
+    st.markdown(f"<h3 style='text-align: center; color: #FFD700;'>建議下注：{suggested}</h3>", unsafe_allow_html=True)
+    
+    if st.button("🧹 換桌/清空數據", use_container_width=True):
+        st.session_state.history = []; st.session_state.next_pred = None; st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
