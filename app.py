@@ -32,7 +32,7 @@ if os.path.exists(cover_image_path):
             background-position: center top;
             background-attachment: fixed;
         }}
-        /* 極淺遮罩 (0.1) 確保原圖橘色與水墨感清晰 */
+        /* ⭐ 只做你要的：極淺遮罩 (0.1) 確保原圖日出橘色清晰 */
         .stApp::before {{
             content: "";
             position: absolute;
@@ -40,7 +40,7 @@ if os.path.exists(cover_image_path):
             background-color: rgba(0, 0, 0, 0.1); 
             z-index: -1;
         }}
-        /* 強力描邊：確保文字在彩色背景下不被吃掉 */
+        /* ⭐ 強力描邊：確保文字在彩色背景下清楚 */
         h1, h2, h3, .stMetric, p, span, div, label, .stCaption {{
             color: #FFFFFF !important;
             text-shadow: 
@@ -64,7 +64,7 @@ if os.path.exists(cover_image_path):
 else:
     st.markdown("<style>.stApp {{ background-color: #121212; }}</style>", unsafe_allow_html=True)
 
-# --- 3. 登入介面 ---
+# --- 3. ⭐ 恢復原本好好的登入介面 ---
 if not st.session_state.login:
     # 標題恢復為原本的名稱
     st.title("💎 私人俱樂部：決策輔助工具")
@@ -77,7 +77,7 @@ if not st.session_state.login:
             st.error("授權金鑰不正確")
     st.stop()
 
-# --- 4. 主內容 ---
+# --- 4. ⭐ 恢復原本主內容佈局 ---
 st.title("💎 私人俱樂部：決策輔助工具")
 st.caption(f"🚀 AI 實時數據運算中 | {today_str}")
 
@@ -91,7 +91,7 @@ if not room_id:
     st.warning("👈 請先輸入房號以開始。")
     st.stop()
 
-# --- 5. 核心決策 (5局啟動) ---
+# --- 5. ⭐ 恢復原本的核心決策 (5局啟動) 與按鈕邏輯 ---
 count = len(st.session_state.history)
 if count < 5:
     st.subheader(f"📥 數據同步中 ({count}/5)")
@@ -109,7 +109,6 @@ else:
     with c2: st.metric("信心值", f"{confidence}%")
     st.divider()
 
-# --- 6. 操作按鈕 ---
 st.write(f"### 📢 記錄開出結果")
 col1, col2, col3 = st.columns([2, 1, 2])
 
@@ -135,7 +134,7 @@ with col2:
 with col3:
     if st.button("🔵 閒", use_container_width=True): handle_click("閒")
 
-# --- 7. 手機端安全墊 (防誤觸) ---
+# --- 7. 手機端安全墊 ---
 st.write("")
 st.write("")
 st.write("")
