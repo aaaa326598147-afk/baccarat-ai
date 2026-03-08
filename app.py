@@ -15,7 +15,7 @@ if 'history' not in st.session_state: st.session_state.history = []
 if 'next_pred' not in st.session_state: st.session_state.next_pred = None
 if 'win_count' not in st.session_state: st.session_state.win_count = 0
 
-# --- 2. 主介面設定 (背景清晰度最高化) ---
+# --- 2. 主介面設定 (高清晰背景) ---
 st.set_page_config(page_title="💎 AI 決策系統", layout="centered")
 
 cover_image_path = "cover.jpg"
@@ -32,7 +32,6 @@ if os.path.exists(cover_image_path):
             background-position: center top;
             background-attachment: fixed;
         }}
-        /* ⭐ 透明度拉到最高：遮罩降至 0.05，呈現最亮原圖色彩 */
         .stApp::before {{
             content: "";
             position: absolute;
@@ -40,21 +39,17 @@ if os.path.exists(cover_image_path):
             background-color: rgba(0, 0, 0, 0.05); 
             z-index: -1;
         }}
-        /* ⭐ 超強力描邊：防止背景太亮導致字看不清楚 */
+        /* 全域文字強化 */
         h1, h2, h3, .stMetric, p, span, div, label, .stCaption {{
             color: #FFFFFF !important;
-            text-shadow: 
-                3px 3px 5px #000,
-                -1px -1px 0 #000, 
-                1px -1px 0 #000,
-                -1px 1px 0 #000,
-                 1px 1px 0 #000 !important;
+            text-shadow: 3px 3px 5px #000, -1px -1px 0 #000, 1px -1px 0 #000 !important;
             font-weight: 800 !important;
         }}
+        /* 按鈕高度與透明度優化 */
         div.stButton > button {{
             background-color: rgba(0,0,0,0.6) !important;
             border: 2px solid #FFFFFF !important;
-            color: white !important;
+            height: 3em !important;
         }}
         .stSidebar {{ background-color: rgba(0,0,0,0.85); }}
         </style>
@@ -79,8 +74,7 @@ st.title("💎 私人俱樂部：決策輔助工具")
 st.caption(f"🚀 AI 實時數據運算中 | {today_str}")
 
 st.sidebar.header("📌 桌面資訊")
-# ⭐ 房號保持完全空白預設
-room_id = st.sidebar.text_input("請輸入房號", value="", placeholder="")
+room_id = st.sidebar.text_input("請輸入房號", value="", placeholder="") # 房號無預設
 
 if st.sidebar.button("🧹 換桌重置"):
     st.session_state.history = []; st.session_state.win_count = 0; st.session_state.next_pred = None; st.rerun()
@@ -88,6 +82,9 @@ if st.sidebar.button("🧹 換桌重置"):
 if not room_id:
     st.warning("👈 請先輸入房號以開始。")
     st.stop()
+
+# 房號顯示加大
+st.markdown(f"### 📡 正在監控：<span style='font-size:32px; color:#FFD700;'>{room_id}</span>", unsafe_allow_html=True)
 
 # --- 5. 核心決策 ---
 count = len(st.session_state.history)
@@ -116,6 +113,8 @@ def handle_click(res):
             st.session_state.win_count += 1
         st.session_state.next_pred = random.choice(["莊", "閒"])
     st.session_state.history.append(res)
+    # 只保留最近 10 局紀錄避免介面過長
+    if len(st.session_state.history) > 10: st.session_state.history.pop(0)
     time.sleep(0.3)
     st.rerun()
 
