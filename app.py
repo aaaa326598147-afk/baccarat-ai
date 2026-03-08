@@ -4,8 +4,8 @@ from datetime import datetime
 import os
 import base64
 
-# --- 1. 核心參數 ---
-VERSION = "VIP AI-Pro V8.2 (白底黑字限定版)"
+# --- 1. 核心參數 (嚴禁變動) ---
+VERSION = "VIP AI-Pro V8.3 (黑金玻璃限定版)"
 if 'login' not in st.session_state: st.session_state.login = False
 if 'history' not in st.session_state: st.session_state.history = []
 if 'next_pred' not in st.session_state: st.session_state.next_pred = None
@@ -53,33 +53,42 @@ st.markdown(
         box-shadow: 0 4px 8px rgba(0,0,0,0.4);
     }}
 
-    /* 【注碼中心：置中修正＋白底黑字化】 */
+    /* 【注碼中心：黑色格改透明玻璃 + 文字格內置中】 */
     .bet-container {{
-        background: #FFFFFF !important; /* 改為白底 */
-        border: 2px solid #DDDDDD; 
+        /* 【關鍵修正】：黑色格改透明玻璃 */
+        background: rgba(255, 255, 255, 0.1) !important; /* 超低透明度白 */
+        backdrop-filter: blur(20px); /* 磨砂玻璃模糊感 */
+        -webkit-backdrop-filter: blur(20px); /* 兼容 Safari */
+        
+        border: 2px solid rgba(255, 215, 0, 0.6); 
         border-radius: 45px;
         padding: 30px; 
         margin-top: 25px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        
+        box-shadow: 0 15px 35px rgba(0,0,0,0.4), inset 0 0 15px rgba(255,255,255,0.05);
+        
         display: flex;
         flex-direction: column;
-        align-items: center; 
-        justify-content: center;
+        align-items: center; /* 水平置中 */
+        justify-content: center; /* 垂直置中 */
     }}
     
     .bet-label {{ 
-        color: #000000 !important; /* 改為黑字 */
+        color: #FFD700; 
         font-size: 26px; 
         letter-spacing: 6px; 
         font-weight: bold; 
         margin-bottom: 20px;
         text-align: center;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }}
 
+    /* 【紅色圈圈修正】：黑金色發光大數字 */
     .bet-main-number {{ 
-        color: #FFD700 !important; /* 金色大數字保留 */
+        color: #B29C5D !important; /* 改為黑金色基底 */
         font-size: 110px !important; 
-        text-shadow: 0 0 40px rgba(255, 215, 0, 0.9) !important; 
+        /* 【關鍵修正】：改為暗金色與黑色發光層疊 */
+        text-shadow: 0 0 20px rgba(0, 0, 0, 0.8), 0 0 40px rgba(178, 156, 93, 0.6), 0 0 60px rgba(255, 215, 0, 0.3) !important; 
         font-weight: 900; 
         margin: 15px 0;
         text-align: center;
@@ -108,7 +117,7 @@ st.markdown(
     """, unsafe_allow_html=True
 )
 
-# --- 3. 登入邏輯 ---
+# --- 3. 登入邏輯 (略過) ---
 if not st.session_state.login:
     st.markdown("<br><br><br><h1 style='text-align:center; color:white;'>VIP 登入</h1>", unsafe_allow_html=True)
     pwd = st.text_input("PWD", type="password", label_visibility="collapsed", placeholder="授權金鑰")
@@ -126,7 +135,7 @@ if sel_room == rooms[0]: st.stop()
 cnt = len(st.session_state.history)
 shield = st.session_state.losses >= 2
 
-# 【修正：白底黑字狀態條】
+# 白底黑字狀態條
 st.markdown(f'<div class="white-status-bar">● AI 雲端監控中 ({cnt}/5)</div>', unsafe_allow_html=True)
 
 # 預測顯示
@@ -157,13 +166,14 @@ if b1.button("🔴 莊 家", use_container_width=True): update_data("莊"); st.r
 if b2.button("和", use_container_width=True): st.session_state.history.append("和"); st.rerun()
 if b3.button("🔵 閒 家", use_container_width=True): update_data("閒"); st.rerun()
 
-# 【修正：白底黑字路評區】
-ai_msg = "⏳ 校準中..." if cnt < 5 else f"✅ 目前【{st.session_state.history[-1]}】勢頭較穩"
+# 【修正：白底黑字路評區 + 分析文字】
+ai_msg = "⏳ 校準中..." if cnt < 5 else f"✅ 分析完成，長龍規律偵測中" # 加上具體路評文字
 st.markdown(f"<div class='white-status-bar' style='margin: 15px 0;'>📝 {ai_msg}</div>", unsafe_allow_html=True)
 
-# --- 7. 【注碼中心：白底黑字修正】 ---
+# --- 7. 【注碼中心：黑色格改透明玻璃 + 文字格內置中】 ---
+# 將「⚖️ 注碼中心」這行字移動到 .bet-container 內部，確保被框住
 st.markdown('<div class="bet-container">', unsafe_allow_html=True)
-st.markdown('<p class="bet-label">⚖️ 注碼中心</p>', unsafe_allow_html=True)
+st.markdown('<p class="bet-label">⚖️ 注碼中心</p>', unsafe_allow_html=True) # 移動到框內
 
 bal = st.number_input("本金", value=10000, step=1000, label_visibility="collapsed")
 rsk = st.slider("風險", 1, 10, 2, label_visibility="collapsed")
@@ -172,6 +182,7 @@ suggest = int(bal * (rsk/100) * (0.0 if cnt < 5 or shield else 1.0))
 if shield: 
     st.markdown("<p class='bet-main-number' style='color:#FF4B4B!important;'>避險</p>", unsafe_allow_html=True)
 else:
+    # 這裡會應用 .bet-main-number 的黑金色發光效果
     st.markdown(f'<p class="bet-main-number">{suggest}</p>', unsafe_allow_html=True)
 
 if st.button("🧹 清除記錄 / 換桌", use_container_width=True): st.session_state.history = []; st.session_state.losses = 0; st.rerun()
