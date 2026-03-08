@@ -18,8 +18,8 @@ def get_final_analysis(history):
         return "🎯 偵測到【單跳規律】，建議跟跳", 2, random.randint(90, 97), True
     return "✅ 盤勢重整中，建議輕倉觀望", 1, random.randint(38, 62), False
 
-# --- 2. 奢華 CSS (移除發光效果) ---
-st.set_page_config(page_title="VIP AI-Pro V11.2", layout="centered")
+# --- 2. 奢華 CSS ---
+st.set_page_config(page_title="VIP AI-Pro V11.4", layout="centered")
 
 def get_base64(path):
     if os.path.exists(path):
@@ -35,42 +35,27 @@ st.markdown(
         50% {{ box-shadow: 0 0 25px #FFD700; border: 1px solid #FFFFFF; }}
         100% {{ box-shadow: 0 0 8px #FFD700; border: 1px solid #FFD700; }}
     }}
-
     .stApp {{ background-image: url("data:image/jpeg;base64,{bg}"); background-size: cover !important; }}
-
     .white-bar {{
-        background: #FFFFFF !important;
-        border-radius: 50px; padding: 12px; text-align: center;
-        color: #000000 !important; font-weight: bold;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-bottom: 12px;
+        background: #FFFFFF !important; border-radius: 50px; padding: 12px; text-align: center;
+        color: #000000 !important; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-bottom: 12px;
     }}
-    
     .hot-glow-active {{
         animation: hot-glow-bar 1.5s infinite ease-in-out !important;
         background: linear-gradient(90deg, #FFFFFF, #FFD700, #FFFFFF) !important;
     }}
-
-    /* 移除金額發光特效 */
     .gold-number {{ 
-        color: #D4AF37 !important; /* 沉穩金 */
-        font-size: 110px !important; 
-        text-shadow: none !important; /* 強制移除發光 */
-        font-weight: 900; 
-        text-align: center;
-        margin: 5px 0;
-        letter-spacing: -2px;
+        color: #D4AF37 !important; font-size: 110px !important; text-shadow: none !important; 
+        font-weight: 900; text-align: center; margin: 5px 0; letter-spacing: -2px;
     }}
-    
     .viewer-box {{
-        text-align: center; background: rgba(0, 0, 0, 0.4); 
-        border-radius: 20px; padding: 5px 15px; width: fit-content; margin: 0 auto 15px auto;
-        border: 1px solid rgba(255, 215, 0, 0.2);
+        text-align: center; background: rgba(0, 0, 0, 0.4); border-radius: 20px; 
+        padding: 5px 15px; width: fit-content; margin: 0 auto 15px auto; border: 1px solid rgba(255, 215, 0, 0.2);
     }}
     .viewer-count {{
         color: #F8D06E !important; font-size: 13px; font-weight: bold; 
         text-shadow: 1px 1px 2px rgba(0,0,0,1); letter-spacing: 1px;
     }}
-
     header, footer {{ visibility: hidden; }}
     </style>
     """, unsafe_allow_html=True
@@ -83,11 +68,21 @@ if 'win_streak' not in st.session_state: st.session_state.win_streak = 0
 if 'losses' not in st.session_state: st.session_state.losses = 0
 if 'next_pred' not in st.session_state: st.session_state.next_pred = None
 if 'locked_room' not in st.session_state: st.session_state.locked_room = None
-if 'viewers' not in st.session_state: st.session_state.viewers = random.randint(182, 235)
 
-if random.random() < 0.2: st.session_state.viewers += random.choice([-1, 1])
+# --- 4. 【核心改進】全自動擬真跳動邏輯 ---
+if 'viewers' not in st.session_state: 
+    st.session_state.viewers = random.randint(182, 235)
 
-# --- 4. 登入系統 ---
+# 每次運行程式碼時，有 80% 的機率人數會發生微幅變動
+if random.random() < 0.8:
+    # 產生的變動幅度在 -3 到 +4 之間，這會讓數值呈現緩步爬升或緩步下降的趨勢，非常寫實
+    st.session_state.viewers += random.choice([-3, -2, -1, 0, 1, 1, 2, 4])
+    
+    # 確保人數維持在一個看起來很厲害的區間 (150 - 350 人)
+    if st.session_state.viewers < 150: st.session_state.viewers += 10
+    if st.session_state.viewers > 350: st.session_state.viewers -= 10
+
+# --- 5. 登入系統 ---
 if not st.session_state.login:
     st.markdown("<br><br><br><h1 style='text-align:center; color:white;'>VIP 系統登入</h1>", unsafe_allow_html=True)
     pwd = st.text_input("PASSWORD", type="password", placeholder="請輸入密碼")
@@ -98,7 +93,7 @@ if not st.session_state.login:
         else: st.error("授權碼錯誤")
     st.stop()
 
-# --- 5. 介面呈現 ---
+# --- 6. 介面呈現 ---
 st.markdown('<h1 style="text-align:center; color:white; margin-bottom:5px; letter-spacing:2px;">數據中心</h1>', unsafe_allow_html=True)
 st.markdown(f'<div class="viewer-box"><span class="viewer-count">● 雲端連線監控中：{st.session_state.viewers} 名 VIP</span></div>', unsafe_allow_html=True)
 
@@ -150,12 +145,11 @@ if b3.button("🔵 閒 家", use_container_width=True): update_step("閒"); st.r
 
 st.markdown(f"<div class='white-bar' style='margin-top: 15px;'>📝 {insight_text}</div>", unsafe_allow_html=True)
 
-# 金額區（移除發光）
+# 金額區 (實體無光金)
 if cnt >= 5:
     st.markdown('<div style="background:white; border-radius:50px; padding:8px 40px; color:black; font-weight:900; margin:20px auto; display:table;">⚖️ 建議分配金額</div>', unsafe_allow_html=True)
     c_bal = st.columns([1, 4, 1])[1]
-    with c_bal:
-        bal = st.number_input("本金", value=10000, label_visibility="collapsed")
+    with c_bal: bal = st.number_input("本金", value=10000, label_visibility="collapsed")
     if st.session_state.losses < 2:
         units = [1, 3, 2, 4]
         u = units[st.session_state.win_streak % 4] if st.session_state.win_streak >= 0 else 1
