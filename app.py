@@ -1,68 +1,48 @@
 import streamlit as st
 import random
-import time
+from datetime import datetime
 
-# --- 專業介面設定 ---
-st.set_page_config(page_title="AI Baccarat Pro", layout="wide")
-st.markdown("""
-    <style>
-    .stButton>button { width: 100%; height: 60px; font-size: 20px; font-weight: bold; }
-    .stMetric { background-color: #f0f2f6; padding: 10px; border-radius: 10px; }
-    </style>
-    """, unsafe_allow_html=True)
+# --- 設定區：這兩個你隨時可以改 ---
+MY_PASSWORD = "888"         # 你要給客人的密碼 (目前設為 888)
+EXPIRY_DATE = "2026-03-31"  # 授權到期日
 
-st.title("🤖 AI 智能百家樂預測系統")
-st.write("深夜筆電專用版 - 實時數據分析中...")
+# --- 介面美化設定 ---
+st.set_page_config(page_title="AI 獲利紀實 Pro", page_icon="💰")
 
-# --- 初始化 ---
-if 'history' not in st.session_state:
-    st.session_state.history = []
+# --- 1. 檢查時間限制 ---
+current_date = datetime.now().strftime("%Y-%m-%d")
+if current_date > EXPIRY_DATE:
+    st.error(f"🛑 系統授權已過期 ({EXPIRY_DATE})，請聯繫管理員更新。")
+    st.stop()
 
-# --- 側邊欄：AI 狀態 ---
-st.sidebar.header("📡 系統狀態")
-st.sidebar.success("AI 模型：已連線")
-st.sidebar.info(f"當前演算局數：{len(st.session_state.history)}")
+# --- 2. 密碼登入檢查 ---
+if 'login' not in st.session_state:
+    st.session_state.login = False
 
-# --- 核心預測邏輯 (讓客人覺得很準的設計) ---
-def get_ai_prediction():
-    if len(st.session_state.history) < 3:
-        return "分析中", 50, "gray"
-    
-    # 這裡可以寫入更複雜的邏輯，目前用模擬的高勝率顯示
-    chance = random.randint(65, 88) # 讓數字看起來有波動
-    target = "🔴 莊家 (Banker)" if random.random() > 0.5 else "🔵 閒家 (Player)"
-    return target, chance, "green"
+if not st.session_state.login:
+    st.title("🔐 私人系統訪問控制")
+    user_input = st.text_input("請輸入授權金鑰：", type="password")
+    if st.button("確認登入"):
+        if user_input == MY_PASSWORD:
+            st.session_state.login = True
+            st.rerun()
+        else:
+            st.error("❌ 密碼錯誤，請重新輸入。")
+    st.stop()
 
-target, win_prob, color = get_ai_prediction()
+# --- 3. 通過檢查後顯示的正式內容 ---
+st.title("🤖 AI 智能獲利預測系統")
+st.success(f"✅ 授權正常：歡迎回來！(有效期至 {EXPIRY_DATE})")
 
-# --- 主畫面：AI 預測區 ---
-st.subheader("🔮 下一局 AI 智能建議")
-col1, col2 = st.columns([2, 1])
+if st.button("🔮 開始預測下一局"):
+    with st.spinner('正在分析路單趨勢...'):
+        import time
+        time.sleep(1)
+        target = random.choice(["🔴 莊家 (Banker)", "🔵 閒家 (Player)"])
+        st.success(f"本局推薦：{target}")
 
-with col1:
-    st.metric(label="推薦下注目標", value=target)
-with col2:
-    st.metric(label="預估勝率", value=f"{win_prob}%")
-
-# --- 操作按鈕 ---
-st.markdown("### 📥 請輸入本局開牌結果")
-c1, c2, c3 = st.columns(3)
-with c1:
-    if st.button("🔴 莊勝"):
-        st.session_state.history.append("B")
-        st.rerun()
-with c2:
-    if st.button("🔵 閒勝"):
-        st.session_state.history.append("P")
-        st.rerun()
-with c3:
-    if st.button("🟢 和局"):
-        st.session_state.history.append("T")
-        st.rerun()
-
-# --- 路單展示 (客人最愛看這個) ---
-st.markdown("### 📊 實時路單監控")
-if st.session_state.history:
-    # 簡單展示路單圖
-    road_map = "  ".join([f"[{h}]" for h in st.session_state.history[-15:]])
+# 登出按鈕
+if st.sidebar.button("登出系統"):
+    st.session_state.login = False
+    st.rerun()
     st.code(road_map, language="text")
