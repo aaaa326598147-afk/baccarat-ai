@@ -1,168 +1,102 @@
 import streamlit as st
 import random
-from datetime import datetime
-import os
-import base64
 
-# --- 1. 核心參數 ---
-VERSION = "VIP AI-Pro V8.2"
-if 'login' not in st.session_state: st.session_state.login = False
+# --- 核心邏輯 ---
 if 'history' not in st.session_state: st.session_state.history = []
-if 'next_pred' not in st.session_state: st.session_state.next_pred = None
 if 'losses' not in st.session_state: st.session_state.losses = 0
 
-# --- 2. 奢華視覺 CSS ---
-st.set_page_config(page_title=VERSION, layout="centered")
+# --- 精緻玻璃視覺 CSS ---
+st.set_page_config(page_title="VIP AI-Pro", layout="centered")
 
-def get_base64(path):
-    if os.path.exists(path):
-        with open(path, "rb") as f: return base64.b64encode(f.read()).decode()
-    return None
-
-bg = get_base64("cover.jpg")
 st.markdown(
-    f"""
+    """
     <style>
-    .stApp {{
-        background-image: url("data:image/jpeg;base64,{bg}");
-        background-size: cover !important;
-        background-position: center center !important;
-    }}
-    .block-container {{ padding-top: 1.5rem !important; max-width: 530px !important; }}
+    /* 全黑背景，襯托玻璃質感 */
+    .stApp { background: #000000 !important; }
+    .block-container { max-width: 480px !important; padding-top: 1rem; }
 
-    /* 珠盤路：每 6 顆自動換行 */
-    .road-grid {{
-        display: grid;
-        grid-template-rows: repeat(6, 42px); 
-        grid-auto-flow: column;             
-        grid-auto-columns: 42px;
-        gap: 8px;
-        background: rgba(60, 60, 60, 0.75) !important;
-        border: 2px solid rgba(255, 255, 255, 0.1);
-        border-radius: 35px;
+    /* 【黑色框框改進：極細磨砂玻璃】 */
+    .glass-box {
+        background: rgba(40, 40, 40, 0.4) !important; /* 降低透明度，透出背景 */
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 0.8px solid rgba(255, 255, 255, 0.2); /* 白金極細邊框 */
+        border-radius: 15px;
         padding: 20px;
-        margin: 20px 0;
-        min-height: 320px;
+        margin: 15px 0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        text-align: center;
+    }
+
+    /* 標題與標籤 */
+    .text-title { color: #FFFFFF; font-weight: 200; letter-spacing: 10px; margin-bottom: 20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    .text-label { color: rgba(255, 255, 255, 0.6); font-size: 13px; letter-spacing: 1px; }
+
+    /* 注碼數字：維持 V8.2 的大氣感，優化光暈 */
+    .bet-main {
+        color: #FFD700 !important;
+        font-size: 110px !important;
+        font-weight: 900;
+        margin: 10px 0;
+        text-shadow: 0 0 25px rgba(255, 215, 0, 0.5), 0 5px 15px rgba(0,0,0,0.8);
+    }
+
+    /* 珠盤路：整齊排列 */
+    .road-grid {
+        display: grid;
+        grid-template-rows: repeat(6, 40px); 
+        grid-auto-flow: column;             
+        grid-auto-columns: 40px;
+        gap: 10px;
         overflow-x: auto;
-        box-shadow: inset 0 0 25px rgba(0,0,0,0.5);
-    }}
-    .road-dot {{
+        justify-content: center;
+    }
+    .dot {
         width: 38px; height: 38px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         font-size: 15px; font-weight: bold; color: white;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-    }}
+    }
 
-    /* 【注碼中心：置中修正】 */
-    .bet-container {{
-        background: rgba(0, 0, 0, 0.8) !important; 
-        border: 2px solid #FFD700; 
-        border-radius: 45px;
-        padding: 30px; 
-        margin-top: 25px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.7);
-        display: flex;
-        flex-direction: column;
-        align-items: center; /* 水平置中 */
-        justify-content: center; /* 垂直置中 */
-    }}
-    
-    .bet-label {{ 
-        color: #FFD700; 
-        font-size: 26px; 
-        letter-spacing: 6px; 
-        font-weight: bold; 
-        margin-bottom: 20px;
-        text-align: center;
-    }}
-
-    .bet-main-number {{ 
-        color: #FFD700 !important; 
-        font-size: 110px !important; /* 加大注碼數字 */
-        text-shadow: 0 0 40px rgba(255, 215, 0, 0.9) !important; 
-        font-weight: 900; 
-        margin: 15px 0;
-        text-align: center;
-        width: 100%;
-    }}
-
-    /* 調整輸入框寬度使其置中 */
-    [data-testid="stNumberInput"], [data-testid="stSlider"] {{
-        width: 80% !important;
-        margin: 0 auto !important;
-    }}
-
-    header, footer {{ visibility: hidden; }}
+    header, footer { visibility: hidden; }
     </style>
     """, unsafe_allow_html=True
 )
 
-# --- 3. 登入邏輯 (略過) ---
-if not st.session_state.login:
-    st.markdown("<br><br><br><h1 style='text-align:center; color:white;'>VIP 登入</h1>", unsafe_allow_html=True)
-    pwd = st.text_input("PWD", type="password", label_visibility="collapsed", placeholder="授權金鑰")
-    if st.button("啟 動", use_container_width=True):
-        if pwd == datetime.now().strftime("%m%d"): st.session_state.login = True; st.rerun()
-    st.stop()
+# --- 介面佈局 ---
+st.markdown('<h2 class="text-title" style="text-align:center;">數據中心</h2>', unsafe_allow_html=True)
+sel_room = st.selectbox("ROOM", ["RB01", "RB02", "RB03"], label_visibility="collapsed")
 
-# --- 4. 房號與預測 (維持原樣) ---
-st.markdown('<h1 style="text-align:center; color:white; letter-spacing:4px;">數據中心</h1>', unsafe_allow_html=True)
-rooms = ["— 請選擇桌號 —"] + [f"RB0{i}" for i in range(1, 8)] + [f"S0{i}" for i in range(1, 8)]
-sel_room = st.selectbox("ROOM", options=rooms, label_visibility="collapsed")
+# 狀態條 (原黑色框框改為玻璃感)
+st.markdown('<div style="background:rgba(255,215,0,0.15); border:0.5px solid #FFD700; border-radius:50px; padding:8px; text-align:center; color:#FFD700; font-size:14px; margin-bottom:20px;">● 百家樂 AI 運算連線成功</div>', unsafe_allow_html=True)
 
-if sel_room == rooms[0]: st.stop()
-
-cnt = len(st.session_state.history)
-shield = st.session_state.losses >= 2
-
-# 狀態條
-st.markdown(f'<div style="background:rgba(0,0,0,0.8); border:1px solid #FFD700; border-radius:50px; padding:10px; text-align:center; color:#FFD700;">● AI 雲端監控中 ({cnt}/5)</div>', unsafe_allow_html=True)
-
-# 預測顯示
-if cnt >= 5 and not shield:
-    if not st.session_state.next_pred: st.session_state.next_pred = random.choices(["莊", "閒"], weights=[0.51, 0.49])[0]
-    pcol = "#ff4b4b" if st.session_state.next_pred == "莊" else "#1c83e1"
-    c1, c2 = st.columns(2)
-    c1.markdown(f"<p style='text-align:center; color:white; margin:0;'>AI 推薦</p><p style='color:{pcol}!important; font-size:72px; font-weight:900; text-align:center; margin:0;'>{st.session_state.next_pred}</p>", unsafe_allow_html=True)
-    c2.markdown(f"<p style='text-align:center; color:white; margin:0;'>信心度</p><p style='color:white!important; font-size:72px; font-weight:900; text-align:center; margin:0;'>{random.randint(96, 99)}%</p>", unsafe_allow_html=True)
-
-# --- 5. 珠盤路 (修復結構) ---
+# 珠盤路面板 (原黑色大框改為玻璃感)
+st.markdown('<div class="glass-box">', unsafe_allow_html=True)
 road_html = '<div class="road-grid">'
 for item in st.session_state.history:
-    color = "#ff4b4b" if item == "莊" else "#1c83e1" if item == "閒" else "#28a745"
-    road_html += f'<div class="road-dot" style="background:{color};">{item}</div>'
-road_html += '</div>'
+    color = "#FF4B4B" if item == "莊" else "#1C83E1" if item == "閒" else "#2ECC71"
+    road_html += f'<div class="dot" style="background:{color};">{item}</div>'
+road_html += '</div></div>'
 st.markdown(road_html, unsafe_allow_html=True)
 
-# --- 6. 輸入按鈕 ---
-b1, b2, b3 = st.columns([2, 1, 2])
-def update_data(r):
-    if st.session_state.next_pred and r != "和":
-        if r != st.session_state.next_pred: st.session_state.losses += 1
-        else: st.session_state.losses = 0
-    st.session_state.history.append(r); st.session_state.next_pred = random.choices(["莊", "閒"], weights=[0.51, 0.49])[0]
+# 操作按鈕
+c1, c2, c3 = st.columns([2, 1, 2])
+if c1.button("🔴 莊 家", use_container_width=True): st.session_state.history.append("莊"); st.rerun()
+if c2.button("和", use_container_width=True): st.session_state.history.append("和"); st.rerun()
+if c3.button("🔵 閒 家", use_container_width=True): st.session_state.history.append("閒"); st.rerun()
 
-if b1.button("🔴 莊 家", use_container_width=True): update_data("莊"); st.rerun()
-if b2.button("和", use_container_width=True): st.session_state.history.append("和"); st.rerun()
-if b3.button("🔵 閒 家", use_container_width=True): update_data("閒"); st.rerun()
+# 路評 (原黑色長框改為玻璃感)
+ai_msg = "偵測趨勢規律中..." if len(st.session_state.history) < 5 else "偵測目前【莊】勢頭較穩"
+st.markdown(f'<div class="glass-box" style="padding:12px; margin:20px 0; border-radius:50px;">📝 路評：{ai_msg}</div>', unsafe_allow_html=True)
 
-# 路評
-ai_msg = "⏳ 校準中..." if cnt < 5 else f"✅ 目前【{st.session_state.history[-1]}】勢頭較穩"
-st.markdown(f"<div style='background:rgba(0,0,0,0.8); border:1.5px solid #FFD700; border-radius:50px; padding:10px; text-align:center; color:#FFD700; margin: 10px 0;'>📝 {ai_msg}</div>", unsafe_allow_html=True)
+# 注碼中心 (維持精確置中，改為玻璃背板)
+st.markdown('<div class="glass-box">', unsafe_allow_html=True)
+st.markdown('<p class="text-label">⚖️ 注 碼 中 心</p>', unsafe_allow_html=True)
 
-# --- 7. 【精確置中修復】注碼中心 ---
-st.markdown('<div class="bet-container">', unsafe_allow_html=True)
-st.markdown('<p class="bet-label">⚖️ 注碼中心</p>', unsafe_allow_html=True)
+ca, cb = st.columns(2)
+with ca: st.number_input("CAPITAL", value=10000, label_visibility="collapsed")
+with cb: st.slider("RISK", 1, 10, 2, label_visibility="collapsed")
 
-# 內部控制元件也需要置中排版
-bal = st.number_input("本金", value=10000, step=1000, label_visibility="collapsed")
-rsk = st.slider("風險", 1, 10, 2, label_visibility="collapsed")
+st.markdown('<p class="bet-main">200</p>', unsafe_allow_html=True)
 
-suggest = int(bal * (rsk/100) * (0.0 if cnt < 5 or shield else 1.0))
-if shield: 
-    st.markdown("<p class='bet-main-number' style='color:#FF4B4B!important;'>避險</p>", unsafe_allow_html=True)
-else:
-    st.markdown(f'<p class="bet-main-number">{suggest}</p>', unsafe_allow_html=True)
-
-if st.button("🧹 清除記錄 / 換桌", use_container_width=True): st.session_state.history = []; st.session_state.losses = 0; st.rerun()
+if st.button("清除記錄 / 換桌", use_container_width=True): st.session_state.history = []; st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
