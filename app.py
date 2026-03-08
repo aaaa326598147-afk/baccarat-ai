@@ -18,8 +18,8 @@ def get_final_analysis(history):
         return "🎯 偵測到【單跳規律】，建議跟跳", 2, random.randint(90, 97), True
     return "✅ 盤勢重整中，建議輕倉觀望", 1, random.randint(38, 62), False
 
-# --- 2. 奢華 CSS (焦點配色優化) ---
-st.set_page_config(page_title="VIP AI-Pro V11.7", layout="centered")
+# --- 2. 奢華 CSS ---
+st.set_page_config(page_title="VIP AI-Pro V12.0", layout="centered")
 
 def get_base64(path):
     if os.path.exists(path):
@@ -63,7 +63,6 @@ st.markdown(
         background: rgba(0, 0, 0, 0.6) !important; backdrop-filter: blur(10px); 
         border-radius: 30px; padding: 20px; overflow-x: auto; min-height: 310px; margin: 15px 0; border: 1px solid rgba(212, 175, 55, 0.2);
     }}
-
     header, footer {{ visibility: hidden; }}
     </style>
     """, unsafe_allow_html=True
@@ -111,15 +110,24 @@ st.markdown(f'<div class="white-bar {glow_style}">● {st.session_state.locked_r
 
 if cnt >= 5:
     if st.session_state.next_pred is None: st.session_state.next_pred = random.choice(["莊", "閒"])
-    # 僅針對大字進行配色優化
-    pcol = "#ff4b4b" if st.session_state.next_pred == "莊" else "#1c83e1"
+    
+    # 【核心改進】始終保持顏色，高趴數觸發發光效果
+    if st.session_state.next_pred == "莊":
+        # 始終紅色，高趴數轉亮紅+發光
+        main_color = "#FF1A1A" if conf_val > 60 else "#B32424"
+        glow_effect = "text-shadow: 0 0 20px rgba(255,26,26,0.8);" if conf_val > 60 else "text-shadow: 2px 2px 4px rgba(0,0,0,0.5);"
+    else:
+        # 始終藍色，高趴數轉亮藍+發光
+        main_color = "#1A8CFF" if conf_val > 60 else "#1A4D80"
+        glow_effect = "text-shadow: 0 0 20px rgba(26,140,255,0.8);" if conf_val > 60 else "text-shadow: 2px 2px 4px rgba(0,0,0,0.5);"
+
     conf_color = "#28a745" if conf_val > 80 else "#ffc107" if conf_val > 55 else "#6c757d"
     
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>AI 智能預測</p><p style='color:{pcol}!important; font-size:80px; font-weight:900; text-align:center; margin-top:-10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);'>{st.session_state.next_pred}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>AI 智能預測</p><p style='color:{main_color}!important; font-size:95px; font-weight:900; text-align:center; margin-top:-15px; {glow_effect}'>{st.session_state.next_pred}</p>", unsafe_allow_html=True)
     with c2:
-        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>分析信心度 {'🔥' if is_hot else ''}</p><p style='color:{conf_color}!important; font-size:80px; font-weight:900; text-align:center; margin-top:-10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);'>{conf_val}%</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>分析信心度 {'🔥' if is_hot else ''}</p><p style='color:{conf_color}!important; font-size:95px; font-weight:900; text-align:center; margin-top:-10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);'>{conf_val}%</p>", unsafe_allow_html=True)
 
 # 珠盤路
 road_inner = ""
@@ -128,7 +136,7 @@ for item in st.session_state.history:
     road_inner += f'<div style="width:38px; height:38px; border-radius:50%; background:{color}; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">{item}</div>'
 st.markdown(f'<div class="road-map-container">{road_inner}</div>', unsafe_allow_html=True)
 
-# 操作按鈕 (維持標準樣式，不影響視覺平衡)
+# 操作按鈕
 b1, b2, b3 = st.columns([2, 1, 2])
 def update_step(r):
     if r != "和" and st.session_state.next_pred:
