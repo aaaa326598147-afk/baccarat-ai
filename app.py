@@ -52,11 +52,6 @@ if st.button("🚀 開始針對該房進行 AI 演算"):
             st.metric("推薦下注", target)
             st.caption(f"💡 分析依據：{reason}")
             st.progress(random.randint(75, 98)) # 顯示信心指數
-# 登出按鈕
-if st.sidebar.button("登出系統"):
-    st.session_state.login = False
-    st.rerun()
-    st.code(road_map, language="text")
 # --- 在程式碼最下面補上這個 ---
 st.write("---")
 st.subheader("🧮 智能注碼計算機")
@@ -65,4 +60,5 @@ risk_percent = st.slider("風險控制 (%)", 1, 10, 2) # 預設下注本金的 2
 
 bet_amount = balance * (risk_percent / 100)
 st.info(f"💡 根據風險控管，建議本手下注金額：**{int(bet_amount)}**")
+
 
