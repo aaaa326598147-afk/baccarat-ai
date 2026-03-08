@@ -182,8 +182,9 @@ suggest = int(bal * (rsk/100) * (0.0 if cnt < 5 or shield else 1.0))
 if shield: 
     st.markdown("<p class='bet-main-number' style='color:#FF4B4B!important;'>避險</p>", unsafe_allow_html=True)
 else:
-    # 這裡會應用 .bet-main-number 的黑金色發光效果
+    # 這裡會應用 .bet-main-number 的金色發光效果
     st.markdown(f'<p class="bet-main-number">{suggest}</p>', unsafe_allow_html=True)
 
 if st.button("🧹 清除記錄 / 換桌", use_container_width=True): st.session_state.history = []; st.session_state.losses = 0; st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
+
