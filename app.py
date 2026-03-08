@@ -5,7 +5,7 @@ import os
 import base64
 
 # --- 1. 核心參數 ---
-VERSION = "VIP AI-Pro V9.2"
+VERSION = "VIP AI-Pro V9.3"
 if 'login' not in st.session_state: st.session_state.login = False
 if 'history' not in st.session_state: st.session_state.history = []
 if 'next_pred' not in st.session_state: st.session_state.next_pred = None
@@ -30,24 +30,7 @@ st.markdown(
     }}
     .block-container {{ padding-top: 1.5rem !important; max-width: 530px !important; }}
 
-    /* 珠盤路 (不變) */
-    .road-grid {{
-        display: grid;
-        grid-template-rows: repeat(6, 42px); 
-        grid-auto-flow: column;             
-        grid-auto-columns: 42px;
-        gap: 8px;
-        background: rgba(60, 60, 60, 0.75) !important;
-        border: 2px solid rgba(255, 255, 255, 0.1);
-        border-radius: 35px;
-        padding: 20px;
-        margin: 20px 0;
-        min-height: 320px;
-        overflow-x: auto;
-    }}
-    .road-dot {{ width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: bold; color: white; }}
-
-    /* 統一白底黑字狀態條 */
+    /* 統一白底黑字風格 */
     .white-status-bar {{
         background: #FFFFFF !important;
         border-radius: 50px;
@@ -59,17 +42,16 @@ st.markdown(
         margin-bottom: 10px;
     }}
 
-    /* 【關鍵修正：注碼控制區全體置中容器】 */
-    .center-control-panel {{
+    /* 全體置中容器 */
+    .center-panel {{
         display: flex;
         flex-direction: column;
-        align-items: center; /* 水平置中 */
-        justify-content: center;
+        align-items: center;
+        text-align: center;
         width: 100%;
-        margin-top: 10px;
     }}
 
-    /* 白底黑字標籤置中自適應 */
+    /* 建議分配金額標籤 - 置中白底黑字 */
     .bet-label-white {{
         background: #FFFFFF !important;
         border-radius: 50px;
@@ -78,34 +60,34 @@ st.markdown(
         font-weight: 900;
         font-size: 20px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        margin-bottom: 25px;
+        margin: 20px 0;
         display: inline-block;
         border: 1px solid rgba(0,0,0,0.1);
     }}
 
-    /* 亮金色發光大數字 (不變) */
+    /* 亮金色大數字 */
     .bet-main-number {{ 
         color: #FFD700 !important; 
         font-size: 115px !important; 
-        text-shadow: 0 0 35px rgba(255, 215, 0, 0.9), 0 5px 15px rgba(0,0,0,0.6) !important; 
+        text-shadow: 0 0 35px rgba(255, 215, 0, 0.9) !important; 
         font-weight: 900; 
-        margin: 5px 0;
-        text-align: center;
-        width: 100%;
+        margin: 10px 0;
     }}
 
-    /* 讓 Streamlit 原生組件在容器內正確縮放與置中 */
-    [data-testid="stNumberInput"], [data-testid="stSlider"] {{
-        width: 85% !important;
+    /* 強制置中 Streamlit 組件內容 */
+    div[data-testid="stNumberInput"] label, div[data-testid="stSlider"] label {{ display: none; }}
+    div[data-testid="stNumberInput"] > div, div[data-testid="stSlider"] > div {{
+        width: 80% !important;
         margin: 0 auto !important;
     }}
+    input {{ text-align: center !important; }} /* 輸入框文字置中 */
 
     header, footer {{ visibility: hidden; }}
     </style>
     """, unsafe_allow_html=True
 )
 
-# --- 3. 核心邏輯 ---
+# --- 3. 登入與基礎設定 ---
 if not st.session_state.login:
     st.markdown("<br><br><br><h1 style='text-align:center; color:white;'>VIP 登入</h1>", unsafe_allow_html=True)
     pwd = st.text_input("PWD", type="password", label_visibility="collapsed", placeholder="授權金鑰")
@@ -113,29 +95,29 @@ if not st.session_state.login:
         if pwd == datetime.now().strftime("%m%d"): st.session_state.login = True; st.rerun()
     st.stop()
 
+cnt = len(st.session_state.history)
+shield = st.session_state.losses >= 2
+
 st.markdown('<h1 style="text-align:center; color:white; letter-spacing:4px;">數據中心</h1>', unsafe_allow_html=True)
 rooms = ["— 請選擇桌號 —"] + [f"RB0{i}" for i in range(1, 8)]
 sel_room = st.selectbox("ROOM", options=rooms, label_visibility="collapsed")
 if sel_room == rooms[0]: st.stop()
 
-cnt = len(st.session_state.history)
-shield = st.session_state.losses >= 2
-
 st.markdown(f'<div class="white-status-bar">● AI 雲端監控中 ({cnt}/5)</div>', unsafe_allow_html=True)
 
-# AI 預測區
-if cnt >= 5 and not shield:
+# 預測顯示 (滿 5 局才出)
+if cnt >= 5:
     if not st.session_state.next_pred: st.session_state.next_pred = random.choices(["莊", "閒"], weights=[0.51, 0.49])[0]
     pcol = "#ff4b4b" if st.session_state.next_pred == "莊" else "#1c83e1"
     c1, c2 = st.columns(2)
     c1.markdown(f"<p style='text-align:center; color:white; margin:0;'>AI 推薦</p><p style='color:{pcol}!important; font-size:72px; font-weight:900; text-align:center; margin:0;'>{st.session_state.next_pred}</p>", unsafe_allow_html=True)
     c2.markdown(f"<p style='text-align:center; color:white; margin:0;'>信心度</p><p style='color:white!important; font-size:72px; font-weight:900; text-align:center; margin:0;'>{random.randint(96, 99)}%</p>", unsafe_allow_html=True)
 
-# 珠盤路
-road_html = '<div class="road-grid">'
+# 珠盤路 (不變)
+road_html = '<div class="road-grid" style="display:grid; grid-template-rows:repeat(6,42px); grid-auto-flow:column; grid-auto-columns:42px; gap:8px; background:rgba(60,60,60,0.75); border-radius:35px; padding:20px; overflow-x:auto; min-height:320px;">'
 for item in st.session_state.history:
     color = "#ff4b4b" if item == "莊" else "#1c83e1" if item == "閒" else "#28a745"
-    road_html += f'<div class="road-dot" style="background:{color};">{item}</div>'
+    road_html += f'<div style="width:38px; height:38px; border-radius:50%; background:{color}; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">{item}</div>'
 road_html += '</div>'
 st.markdown(road_html, unsafe_allow_html=True)
 
@@ -151,29 +133,32 @@ if b1.button("🔴 莊 家", use_container_width=True): update_data("莊"); st.r
 if b2.button("和", use_container_width=True): st.session_state.history.append("和"); st.rerun()
 if b3.button("🔵 閒 家", use_container_width=True): update_data("閒"); st.rerun()
 
-# AI 路評分析 (白底黑字)
+# 路評 (白底黑字)
 insights = ["✅ 長龍規律偵測中", "✅ 大路呈現單跳趨勢", "✅ 雙跳規律成型", "✅ 偵測到一莊一閒循環", "✅ 偵測到【連勝波段】"]
 ai_msg = "⏳ 數據收集校準中..." if cnt < 5 else random.choice(insights)
 st.markdown(f"<div class='white-status-bar' style='margin: 15px 0;'>📝 {ai_msg}</div>", unsafe_allow_html=True)
 
-# --- 4. 【注碼中心：全體絕對置中】 ---
-st.markdown('<div class="center-control-panel">', unsafe_allow_html=True)
+# --- 4. 注碼控制區 (強制 5 局門檻) ---
+st.markdown('<div class="center-panel">', unsafe_allow_html=True)
 
-# 標籤置中
-st.markdown('<div class="bet-label-white">⚖️ 建議分配金額</div>', unsafe_allow_html=True)
-
-# 輸入組件
-bal = st.number_input("本金", value=10000, step=1000, label_visibility="collapsed")
-rsk = st.slider("風險", 1, 10, 2, label_visibility="collapsed")
-
-suggest = int(bal * (rsk/100) * (0.0 if cnt < 5 or shield else 1.0))
-
-if shield: 
-    st.markdown("<p class='bet-main-number' style='color:#FF4B4B!important;'>避險</p>", unsafe_allow_html=True)
+if cnt < 5:
+    # 未滿 5 局，顯示空白或提示，不給操作
+    st.markdown('<div style="height: 200px; display: flex; align-items: center; color: rgba(255,255,255,0.3);">請先完成 5 局數據輸入</div>', unsafe_allow_html=True)
 else:
-    # 亮金色發光大數字置中
-    st.markdown(f'<p class="bet-main-number">{suggest}</p>', unsafe_allow_html=True)
+    # 滿 5 局才出現所有內容
+    st.markdown('<div class="bet-label-white">⚖️ 建議分配金額</div>', unsafe_allow_html=True)
+    
+    bal = st.number_input("本金", value=10000, step=1000, key="bal_in")
+    rsk = st.slider("風險", 1, 10, 2, key="rsk_sl")
+    
+    # 計算金額 (移除避險文字，避險時不顯示數字)
+    if not shield:
+        suggest = int(bal * (rsk/100))
+        st.markdown(f'<p class="bet-main-number">{suggest}</p>', unsafe_allow_html=True)
+    else:
+        st.markdown('<p class="bet-main-number" style="opacity:0.2;">0</p>', unsafe_allow_html=True)
 
-if st.button("🧹 清除記錄 / 換桌", use_container_width=True): st.session_state.history = []; st.session_state.losses = 0; st.rerun()
+if st.button("🧹 清除記錄 / 換桌", use_container_width=True):
+    st.session_state.history = []; st.session_state.losses = 0; st.session_state.next_pred = None; st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
