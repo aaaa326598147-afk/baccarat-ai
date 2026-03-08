@@ -5,7 +5,7 @@ import os
 import base64
 
 # --- 1. 核心參數 ---
-VERSION = "VIP AI-Pro V8.9"
+VERSION = "VIP AI-Pro V9.0"
 if 'login' not in st.session_state: st.session_state.login = False
 if 'history' not in st.session_state: st.session_state.history = []
 if 'next_pred' not in st.session_state: st.session_state.next_pred = None
@@ -30,7 +30,7 @@ st.markdown(
     }}
     .block-container {{ padding-top: 1.5rem !important; max-width: 530px !important; }}
 
-    /* 珠盤路 */
+    /* 珠盤路 (不變) */
     .road-grid {{
         display: grid;
         grid-template-rows: repeat(6, 42px); 
@@ -45,13 +45,9 @@ st.markdown(
         min-height: 320px;
         overflow-x: auto;
     }}
-    .road-dot {{
-        width: 38px; height: 38px; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 15px; font-weight: bold; color: white;
-    }}
+    .road-dot {{ width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: bold; color: white; }}
 
-    /* 狀態條與路評：白底黑字 */
+    /* 統一白底黑字風格 */
     .white-status-bar {{
         background: #FFFFFF !important;
         border-radius: 50px;
@@ -63,39 +59,36 @@ st.markdown(
         margin-bottom: 10px;
     }}
 
-    /* 注碼中心容器 */
-    .bet-container {{
-        background: rgba(40, 40, 40, 0.9) !important; 
-        border: 2px solid #FFD700; 
-        border-radius: 45px;
-        padding: 25px; 
-        margin-top: 25px;
+    /* 【關鍵修正：建議分配金額標籤 - 白底黑字】 */
+    .bet-label-white {{
+        background: #FFFFFF !important;
+        border-radius: 50px;
+        padding: 10px 30px;
+        text-align: center;
+        color: #000000 !important;
+        font-weight: 900;
+        font-size: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        margin: 10px 0 20px 0;
+        display: inline-block;
+        border: 1px solid rgba(0,0,0,0.1);
+    }}
+
+    /* 注碼數字區塊 (移除多餘背景框，僅保留大數字) */
+    .bet-number-container {{
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-    }}
-    
-    /* 建議分配金額金框 */
-    .bet-label-box {{
-        background: rgba(20, 20, 20, 0.9);
-        border: 1.5px solid #FFD700;
-        border-radius: 30px;
-        width: 80%;
-        padding: 10px;
-        margin-bottom: 15px;
-        text-align: center;
+        width: 100%;
     }}
 
-    .bet-label-text {{ color: #FFD700; font-size: 20px; font-weight: bold; margin: 0; }}
-
-    /* 亮金色發光大數字 */
+    /* 亮金色發光大數字 (不變) */
     .bet-main-number {{ 
         color: #FFD700 !important; 
         font-size: 115px !important; 
         text-shadow: 0 0 35px rgba(255, 215, 0, 0.9), 0 5px 15px rgba(0,0,0,0.6) !important; 
         font-weight: 900; 
-        margin: 10px 0;
+        margin: 5px 0;
         text-align: center;
         width: 100%;
     }}
@@ -124,10 +117,8 @@ shield = st.session_state.losses >= 2
 
 st.markdown(f'<div class="white-status-bar">● AI 雲端監控中 ({cnt}/5)</div>', unsafe_allow_html=True)
 
-# 【修正：將預測顯示區塊放回】
 if cnt >= 5 and not shield:
-    if not st.session_state.next_pred:
-        st.session_state.next_pred = random.choices(["莊", "閒"], weights=[0.51, 0.49])[0]
+    if not st.session_state.next_pred: st.session_state.next_pred = random.choices(["莊", "閒"], weights=[0.51, 0.49])[0]
     pcol = "#ff4b4b" if st.session_state.next_pred == "莊" else "#1c83e1"
     c1, c2 = st.columns(2)
     c1.markdown(f"<p style='text-align:center; color:white; margin:0;'>AI 推薦</p><p style='color:{pcol}!important; font-size:72px; font-weight:900; text-align:center; margin:0;'>{st.session_state.next_pred}</p>", unsafe_allow_html=True)
@@ -147,24 +138,22 @@ def update_data(r):
     if st.session_state.next_pred and r != "和":
         if r != st.session_state.next_pred: st.session_state.losses += 1
         else: st.session_state.losses = 0
-    st.session_state.history.append(r)
-    st.session_state.next_pred = random.choices(["莊", "閒"], weights=[0.51, 0.49])[0]
+    st.session_state.history.append(r); st.session_state.next_pred = random.choices(["莊", "閒"], weights=[0.51, 0.49])[0]
 
 if b1.button("🔴 莊 家", use_container_width=True): update_data("莊"); st.rerun()
 if b2.button("和", use_container_width=True): st.session_state.history.append("和"); st.rerun()
 if b3.button("🔵 閒 家", use_container_width=True): update_data("閒"); st.rerun()
 
-# AI 路評分析
-def get_ai_insight():
-    if cnt < 5: return "⏳ 數據收集校準中..."
-    insights = ["✅ 長龍規律偵測中", "✅ 大路呈現單跳趨勢", "✅ 雙跳規律成型", "✅ 偵測到一莊一閒循環", "✅ 偵測到【連勝波段】"]
-    return random.choice(insights)
+# AI 路評分析 (白底黑字)
+insights = ["✅ 長龍規律偵測中", "✅ 大路呈現單跳趨勢", "✅ 雙跳規律成型", "✅ 偵測到一莊一閒循環", "✅ 偵測到【連勝波段】"]
+ai_msg = "⏳ 數據收集校準中..." if cnt < 5 else random.choice(insights)
+st.markdown(f"<div class='white-status-bar' style='margin: 15px 0;'>📝 {ai_msg}</div>", unsafe_allow_html=True)
 
-st.markdown(f"<div class='white-status-bar' style='margin: 15px 0;'>📝 {get_ai_insight()}</div>", unsafe_allow_html=True)
+# --- 4. 【注碼中心修正：移除上方黑框 + 標籤白底黑字】 ---
+st.markdown('<div class="bet-number-container">', unsafe_allow_html=True)
 
-# 注碼中心
-st.markdown('<div class="bet-container">', unsafe_allow_html=True)
-st.markdown('<div class="bet-label-box"><p class="bet-label-text">⚖️ 建議分配金額</p></div>', unsafe_allow_html=True)
+# 移除原本在這邊的深色空白方塊，直接放標籤
+st.markdown('<div class="bet-label-white">⚖️ 建議分配金額</div>', unsafe_allow_html=True)
 
 bal = st.number_input("本金", value=10000, step=1000, label_visibility="collapsed")
 rsk = st.slider("風險", 1, 10, 2, label_visibility="collapsed")
