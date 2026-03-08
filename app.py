@@ -61,7 +61,7 @@ if os.path.exists(cover_image_path):
 
 # --- 3. 登入介面 ---
 if not st.session_state.login:
-    st.title("AI+試算法預測程式")
+    st.title("💎 私人俱樂部：決策輔助工具")
     pwd = st.text_input("輸入今日授權金鑰：", type="password")
     if st.button("驗證進入", use_container_width=True):
         if pwd == today_code:
@@ -69,25 +69,24 @@ if not st.session_state.login:
             st.rerun()
     st.stop()
 
-# --- 4. 主內容 ---
+# --- 4. 主內容 (直接顯示，不再阻擋) ---
 st.markdown("<h2 style='text-align: center;'>💎 私人俱樂部</h2>", unsafe_allow_html=True)
 
+# 側邊欄僅作為輔助資訊
 st.sidebar.header("📌 桌面資訊")
-room_id = st.sidebar.text_input("請輸入房號", value="", placeholder="")
+room_id = st.sidebar.text_input("房號 (可選填)", value="", placeholder="例如：RB03")
 
 if st.sidebar.button("🧹 換桌重置"):
     st.session_state.history = []; st.session_state.win_count = 0; st.session_state.next_pred = None; st.rerun()
 
-if not room_id:
-    st.warning("👈 請先輸入房號以開始。")
-    st.stop()
-
-st.markdown(f"<div style='text-align: center;'>📡 正在監控：<span style='font-size:32px; color:#FFD700;'>{room_id}</span></div>", unsafe_allow_html=True)
+# 房號顯示：有填才顯示，沒填顯示「即時監控中」
+display_room = f"📡 正在監控：{room_id}" if room_id else "📡 雲端算力連線中"
+st.markdown(f"<div style='text-align: center; font-size:24px; color:#FFD700;'>{display_room}</div>", unsafe_allow_html=True)
 
 # --- 5. 核心決策 ---
 count = len(st.session_state.history)
 if count < 5:
-    st.markdown(f"<p style='text-align: center;'>📥 數據同步中 ({count}/5)</p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align: center; margin-top:10px;'>📥 數據同步中 ({count}/5)</p>", unsafe_allow_html=True)
     st.progress(count / 5)
 else:
     if st.session_state.next_pred is None:
@@ -98,7 +97,7 @@ else:
     with c1: st.metric("核心推薦", f"🔴 {current_p}" if current_p == "莊" else f"🔵 {current_p}")
     with c2: st.metric("信心值", f"{confidence}%")
 
-# --- 6. ⭐ AI 路評紀錄 (已補回，限制顯示最近 10 局) ---
+# --- 6. AI 路評紀錄 ---
 if st.session_state.history:
     styled_h = [f"🔴{x}" if x=="莊" else f"🔵{x}" if x=="閒" else f"🟢{x}" for x in st.session_state.history]
     st.markdown(f"<div style='text-align: center; font-size: 14px; margin: 10px 0;'>{' ➡️ '.join(styled_h[-10:])}</div>", unsafe_allow_html=True)
@@ -112,7 +111,7 @@ def handle_click(res):
             st.session_state.win_count += 1
         st.session_state.next_pred = random.choice(["莊", "閒"])
     st.session_state.history.append(res)
-    time.sleep(0.2)
+    time.sleep(0.1) # 加快回饋速度
     st.rerun()
 
 with col1:
@@ -127,5 +126,3 @@ with st.expander("🧮 智能注碼計算機", expanded=True):
     balance = st.number_input("💵 本金", value=10000, step=1000)
     risk = st.slider("⚖️ 下注 %", 1, 10, 2)
     st.success(f"💡 建議下注：**{int(balance * (risk / 100))}**")
-    
-
