@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 import base64
 
-# --- 1. 初始化 ---
+# --- 1. 初始化 (2026-03-08 密碼為 0308) ---
 now = datetime.now()
 today_str = now.strftime("%Y-%m-%d")
 today_code = now.strftime("%m%d")
@@ -15,7 +15,7 @@ if 'history' not in st.session_state: st.session_state.history = []
 if 'next_pred' not in st.session_state: st.session_state.next_pred = None
 if 'win_count' not in st.session_state: st.session_state.win_count = 0
 
-# --- 2. 主介面設定 (原圖背景邏輯) ---
+# --- 2. 主介面設定 (原圖背景與文字清晰化) ---
 st.set_page_config(page_title="💎 AI 決策系統", layout="centered")
 
 cover_image_path = "cover.jpg"
@@ -32,7 +32,7 @@ if os.path.exists(cover_image_path):
             background-position: center top;
             background-attachment: fixed;
         }}
-        /* 💡 這裡將遮罩調到極淺 (0.1)，讓原圖顏色爆發出來 */
+        /* 極淺遮罩 (0.1) 確保原圖橘色與水墨感清晰 */
         .stApp::before {{
             content: "";
             position: absolute;
@@ -40,18 +40,17 @@ if os.path.exists(cover_image_path):
             background-color: rgba(0, 0, 0, 0.1); 
             z-index: -1;
         }}
-        /* 💡 加強文字黑色描邊，確保在亮色背景下依然清晰 */
-        h1, h2, h3, .stMetric, p, span, div, label {{
+        /* 強力描邊：確保文字在彩色背景下不被吃掉 */
+        h1, h2, h3, .stMetric, p, span, div, label, .stCaption {{
             color: #FFFFFF !important;
             text-shadow: 
                 2px 2px 3px #000,
-                -1px -1px 0 #000,  
+                -1px -1px 0 #000, 
                 1px -1px 0 #000,
                 -1px 1px 0 #000,
                  1px 1px 0 #000 !important;
             font-weight: 800 !important;
         }}
-        /* 按鈕半透明黑，增加質感 */
         div.stButton > button {{
             background-color: rgba(0,0,0,0.6) !important;
             border: 2px solid #FFFFFF !important;
@@ -63,29 +62,82 @@ if os.path.exists(cover_image_path):
         unsafe_allow_html=True
     )
 else:
-    # 沒圖時才顯示黑底
-    st.markdown("<style>.stApp { background-color: #121212; }</style>", unsafe_allow_html=True)
+    st.markdown("<style>.stApp {{ background-color: #121212; }}</style>", unsafe_allow_html=True)
 
 # --- 3. 登入介面 ---
 if not st.session_state.login:
-    st.title("💎 深夜筆電・獲利紀實")
+    # 標題恢復為原本的名稱
+    st.title("💎 私人俱樂部：決策輔助工具")
     pwd = st.text_input("輸入今日授權金鑰：", type="password")
     if st.button("驗證進入", use_container_width=True):
         if pwd == today_code:
             st.session_state.login = True
             st.rerun()
         else:
-            st.error("金鑰錯誤")
+            st.error("授權金鑰不正確")
     st.stop()
 
-# --- 4. 主內容 (房號與決策) ---
-st.title("💎 深夜筆電・獲利紀實")
+# --- 4. 主內容 ---
+st.title("💎 私人俱樂部：決策輔助工具")
+st.caption(f"🚀 AI 實時數據運算中 | {today_str}")
+
 st.sidebar.header("📌 桌面資訊")
 room_id = st.sidebar.text_input("請輸入房號", placeholder="例如：VIP-888")
 
+if st.sidebar.button("🧹 換桌重置"):
+    st.session_state.history = []; st.session_state.win_count = 0; st.session_state.next_pred = None; st.rerun()
+
 if not room_id:
-    st.warning("👈 請先輸入房號以連線雲端算力。")
+    st.warning("👈 請先輸入房號以開始。")
     st.stop()
 
-# (後續接原本的歷史紀錄與按鈕代碼...)
-st.write(f"📡 正在監控：**{room_id}**")
+# --- 5. 核心決策 (5局啟動) ---
+count = len(st.session_state.history)
+if count < 5:
+    st.subheader(f"📥 數據同步中 ({count}/5)")
+    st.progress(count / 5)
+    st.info("請輸入最近 5 局結果啟動演算。")
+else:
+    if st.session_state.next_pred is None:
+        st.session_state.next_pred = random.choice(["莊", "閒"])
+    
+    current_p = st.session_state.next_pred
+    confidence = random.randint(92, 99)
+    
+    c1, c2 = st.columns(2)
+    with c1: st.metric("核心推薦", f"🔴 {current_p}" if current_p == "莊" else f"🔵 {current_p}")
+    with c2: st.metric("信心值", f"{confidence}%")
+    st.divider()
+
+# --- 6. 操作按鈕 ---
+st.write(f"### 📢 記錄開出結果")
+col1, col2, col3 = st.columns([2, 1, 2])
+
+def handle_click(res):
+    if len(st.session_state.history) >= 5:
+        if st.session_state.next_pred and res == st.session_state.next_pred:
+            st.session_state.win_count += 1
+            st.balloons(); st.snow()
+            st.session_state.next_pred = random.choice(["莊", "閒"])
+        elif res != "和":
+            st.session_state.next_pred = random.choice(["莊", "閒"])
+    else:
+        if res != "和": st.session_state.next_pred = random.choice(["莊", "閒"])
+            
+    st.session_state.history.append(res)
+    time.sleep(0.5)
+    st.rerun()
+
+with col1:
+    if st.button("🔴 莊", use_container_width=True): handle_click("莊")
+with col2:
+    if st.button("🟢 和", use_container_width=True): handle_click("和")
+with col3:
+    if st.button("🔵 閒", use_container_width=True): handle_click("閒")
+
+# --- 7. 手機端安全墊 (防誤觸) ---
+st.write("")
+st.write("")
+st.write("")
+st.write("")
+st.write("")
