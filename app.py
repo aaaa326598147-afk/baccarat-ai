@@ -18,8 +18,8 @@ def get_final_analysis(history):
         return "🎯 偵測到【單跳規律】，建議跟跳", 2, random.randint(90, 97), True
     return "✅ 盤勢重整中，建議輕倉觀望", 1, random.randint(38, 62), False
 
-# --- 2. 奢華 CSS ---
-st.set_page_config(page_title="VIP AI-Pro V11.4", layout="centered")
+# --- 2. 奢華 CSS (優化透明度與毛玻璃效果) ---
+st.set_page_config(page_title="VIP AI-Pro V11.5", layout="centered")
 
 def get_base64(path):
     if os.path.exists(path):
@@ -49,40 +49,51 @@ st.markdown(
         font-weight: 900; text-align: center; margin: 5px 0; letter-spacing: -2px;
     }}
     .viewer-box {{
-        text-align: center; background: rgba(0, 0, 0, 0.4); border-radius: 20px; 
+        text-align: center; background: rgba(0, 0, 0, 0.5); border-radius: 20px; 
         padding: 5px 15px; width: fit-content; margin: 0 auto 15px auto; border: 1px solid rgba(255, 215, 0, 0.2);
     }}
     .viewer-count {{
         color: #F8D06E !important; font-size: 13px; font-weight: bold; 
         text-shadow: 1px 1px 2px rgba(0,0,0,1); letter-spacing: 1px;
     }}
+    
+    /* 珠盤路透明度與毛玻璃優化 */
+    .road-map-container {{
+        display: grid; 
+        grid-template-rows: repeat(6, 42px); 
+        grid-auto-flow: column; 
+        grid-auto-columns: 42px; 
+        gap: 8px; 
+        background: rgba(0, 0, 0, 0.6) !important; /* 降低不透明度至 0.6 */
+        backdrop-filter: blur(10px); /* 增加背景模糊，提升質感 */
+        border-radius: 30px; 
+        padding: 20px; 
+        overflow-x: auto; 
+        min-height: 310px; 
+        margin: 15px 0; 
+        border: 1px solid rgba(212, 175, 55, 0.2);
+    }}
+
     header, footer {{ visibility: hidden; }}
     </style>
     """, unsafe_allow_html=True
 )
 
-# --- 3. 初始化 ---
+# --- 3. 初始化 & 自動擬真跳動 ---
 if 'login' not in st.session_state: st.session_state.login = False
 if 'history' not in st.session_state: st.session_state.history = []
 if 'win_streak' not in st.session_state: st.session_state.win_streak = 0
 if 'losses' not in st.session_state: st.session_state.losses = 0
 if 'next_pred' not in st.session_state: st.session_state.next_pred = None
 if 'locked_room' not in st.session_state: st.session_state.locked_room = None
+if 'viewers' not in st.session_state: st.session_state.viewers = random.randint(182, 235)
 
-# --- 4. 【核心改進】全自動擬真跳動邏輯 ---
-if 'viewers' not in st.session_state: 
-    st.session_state.viewers = random.randint(182, 235)
+if random.random() < 0.7:
+    st.session_state.viewers += random.choice([-2, -1, 1, 2, 3])
+    if st.session_state.viewers < 150: st.session_state.viewers = 160
+    if st.session_state.viewers > 350: st.session_state.viewers = 340
 
-# 每次運行程式碼時，有 80% 的機率人數會發生微幅變動
-if random.random() < 0.8:
-    # 產生的變動幅度在 -3 到 +4 之間，這會讓數值呈現緩步爬升或緩步下降的趨勢，非常寫實
-    st.session_state.viewers += random.choice([-3, -2, -1, 0, 1, 1, 2, 4])
-    
-    # 確保人數維持在一個看起來很厲害的區間 (150 - 350 人)
-    if st.session_state.viewers < 150: st.session_state.viewers += 10
-    if st.session_state.viewers > 350: st.session_state.viewers -= 10
-
-# --- 5. 登入系統 ---
+# --- 4. 登入系統 ---
 if not st.session_state.login:
     st.markdown("<br><br><br><h1 style='text-align:center; color:white;'>VIP 系統登入</h1>", unsafe_allow_html=True)
     pwd = st.text_input("PASSWORD", type="password", placeholder="請輸入密碼")
@@ -93,7 +104,7 @@ if not st.session_state.login:
         else: st.error("授權碼錯誤")
     st.stop()
 
-# --- 6. 介面呈現 ---
+# --- 5. 介面呈現 ---
 st.markdown('<h1 style="text-align:center; color:white; margin-bottom:5px; letter-spacing:2px;">數據中心</h1>', unsafe_allow_html=True)
 st.markdown(f'<div class="viewer-box"><span class="viewer-count">● 雲端連線監控中：{st.session_state.viewers} 名 VIP</span></div>', unsafe_allow_html=True)
 
@@ -116,15 +127,14 @@ if cnt >= 5:
     conf_color = "#28a745" if conf_val > 80 else "#ffc107" if conf_val > 55 else "#6c757d"
     c1, c2 = st.columns(2)
     c1.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>AI 智能預測</p><p style='color:{pcol}!important; font-size:80px; font-weight:900; text-align:center; margin-top:-10px;'>{st.session_state.next_pred}</p>", unsafe_allow_html=True)
-    c2.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>信心度 {'🔥' if is_hot else ''}</p><p style='color:{conf_color}!important; font-size:80px; font-weight:900; text-align:center; margin-top:-10px;'>{conf_val}%</p>", unsafe_allow_html=True)
+    c2.markdown(f"<p style='text-align:center; color:white; margin:0; font-size:14px;'>分析信心度 {'🔥' if is_hot else ''}</p><p style='color:{conf_color}!important; font-size:80px; font-weight:900; text-align:center; margin-top:-10px;'>{conf_val}%</p>", unsafe_allow_html=True)
 
-# 珠盤路
-road_html = '<div style="display:grid; grid-template-rows:repeat(6,42px); grid-auto-flow:column; grid-auto-columns:42px; gap:8px; background:rgba(0,0,0,0.85); border-radius:30px; padding:20px; overflow-x:auto; min-height:310px; margin:15px 0; border: 1px solid rgba(212,175,55,0.3);">'
+# 珠盤路 (套用新的路紙 CSS)
+road_inner = ""
 for item in st.session_state.history:
     color = "#ff4b4b" if item == "莊" else "#1c83e1" if item == "閒" else "#28a745"
-    road_html += f'<div style="width:38px; height:38px; border-radius:50%; background:{color}; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">{item}</div>'
-road_html += '</div>'
-st.markdown(road_html, unsafe_allow_html=True)
+    road_inner += f'<div style="width:38px; height:38px; border-radius:50%; background:{color}; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">{item}</div>'
+st.markdown(f'<div class="road-map-container">{road_inner}</div>', unsafe_allow_html=True)
 
 # 操作按鈕
 b1, b2, b3 = st.columns([2, 1, 2])
@@ -145,7 +155,7 @@ if b3.button("🔵 閒 家", use_container_width=True): update_step("閒"); st.r
 
 st.markdown(f"<div class='white-bar' style='margin-top: 15px;'>📝 {insight_text}</div>", unsafe_allow_html=True)
 
-# 金額區 (實體無光金)
+# 金額區
 if cnt >= 5:
     st.markdown('<div style="background:white; border-radius:50px; padding:8px 40px; color:black; font-weight:900; margin:20px auto; display:table;">⚖️ 建議分配金額</div>', unsafe_allow_html=True)
     c_bal = st.columns([1, 4, 1])[1]
