@@ -61,7 +61,7 @@ if os.path.exists(cover_image_path):
 
 # --- 3. 登入介面 ---
 if not st.session_state.login:
-    st.title("💎 私人俱樂部：決策輔助工具")
+    st.title("AI+試算法預測程式")
     pwd = st.text_input("輸入今日授權金鑰：", type="password")
     if st.button("驗證進入", use_container_width=True):
         if pwd == today_code:
@@ -128,3 +128,4 @@ with st.expander("🧮 智能注碼計算機", expanded=True):
     risk = st.slider("⚖️ 下注 %", 1, 10, 2)
     st.success(f"💡 建議下注：**{int(balance * (risk / 100))}**")
     
+
