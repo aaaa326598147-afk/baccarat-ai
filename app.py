@@ -114,6 +114,7 @@ st.write("---")
 st.subheader("🧮 智能注碼計算機")
 with st.expander("🛡️ 風險管理面板", expanded=True):
     balance = st.number_input("💵 本金", value=10000)
-    risk = st.
-    slider("⚖️ 下注比例 (%)", 1, 10, 2)
+    risk = st.slider("⚖️ 下注比例 (%)", 1, 10, 2)
     st.success(f"💡 建議下注金額：**{int(balance * (risk / 100))}**")
+    
+
