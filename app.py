@@ -5,8 +5,8 @@ import os
 import base64
 
 # --- 1. 核心參數 ---
-VERSION = "VIP AI-Pro V5.7 雙鑽中軸版"
-LAST_SYNC = "2026-03-08 23:59"
+VERSION = "VIP AI-Pro V5.8 純淨雙鑽版"
+LAST_SYNC = "2026-03-09 00:15"
 
 if 'login' not in st.session_state: st.session_state.login = False
 if 'history' not in st.session_state: st.session_state.history = []
@@ -33,28 +33,36 @@ st.markdown(
         image-rendering: -webkit-optimize-contrast;
     }}
     
-    .block-container {{ padding-top: 1.5rem !important; max-width: 530px !important; }}
+    .block-container {{ padding-top: 2rem !important; max-width: 530px !important; }}
     
     /* 屏蔽原生碎屑 */
     [data-testid="stInputWidgetInstructions"] {{ display: none !important; }}
     
-    /* 強制中軸對稱標題 (解決偏移問題) */
+    /* 無框純淨標題區塊 (移除框框) */
+    .clean-header-zone {{
+        text-align: center;
+        margin-bottom: 30px;
+        background: none !important; /* 徹底移除背景 */
+        border: none !important;     /* 徹底移除邊框 */
+        box-shadow: none !important;  /* 徹底移除陰影 */
+    }}
+
     .flex-title {{
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 15px;
-        margin-bottom: 5px;
     }}
     .flex-title h1 {{
         margin: 0 !important;
-        font-size: 42px !important;
-        letter-spacing: 5px !important;
-        white-space: nowrap;
+        font-size: 44px !important;
+        letter-spacing: 6px !important;
+        color: #FFFFFF !important;
+        text-shadow: 0px 4px 20px rgba(0,0,0,1) !important;
     }}
     .diamond-icon {{
-        font-size: 35px;
-        text-shadow: 0 0 20px rgba(0, 191, 255, 0.8) !important;
+        font-size: 38px;
+        filter: drop-shadow(0 0 15px rgba(0, 191, 255, 0.8));
     }}
 
     /* 全域文字質感 */
@@ -65,7 +73,7 @@ st.markdown(
         text-shadow: 0px 4px 15px rgba(0,0,0,1) !important;
     }}
 
-    /* 白金透明磨砂面板 */
+    /* 功能性面板 (保留用於注碼中心，維持層次) */
     .vip-card {{
         background: rgba(255, 255, 255, 0.14);
         backdrop-filter: blur(40px);
@@ -89,7 +97,6 @@ st.markdown(
         transition: 0.4s ease;
     }}
     
-    /* 高清發光數據 */
     .big-data {{
         color: #FFD700 !important;
         font-size: 92px !important;
@@ -103,21 +110,21 @@ st.markdown(
     """, unsafe_allow_html=True
 )
 
-# --- 3. 登入介面 (修正對稱) ---
+# --- 3. 登入介面 (純淨無框版) ---
 if not st.session_state.login:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     st.markdown('''
-        <div class="vip-card" style="text-align:center;">
+        <div class="clean-header-zone">
             <div class="flex-title">
                 <span class="diamond-icon">💎</span>
                 <h1>百家樂 VIP 系統</h1>
                 <span class="diamond-icon">💎</span>
             </div>
-            <p style="opacity:0.8; letter-spacing:4px;">PREMIUM ACCESS ONLY</p>
+            <p style="opacity:0.9; letter-spacing:4px; font-size:16px;">PREMIUM ACCESS ONLY</p>
         </div>
     ''', unsafe_allow_html=True)
     
-    st.markdown("<div style='height: 45px;'></div>", unsafe_allow_html=True) 
+    st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True) 
     pwd = st.text_input("PWD", type="password", label_visibility="collapsed", placeholder="請輸入當日授權金鑰")
     
     if st.button("啟 動 系 統", use_container_width=True):
@@ -125,9 +132,9 @@ if not st.session_state.login:
             st.session_state.login = True; st.rerun()
     st.stop()
 
-# --- 4. 數據中心主介面 (修正對稱) ---
+# --- 4. 數據中心主介面 (純淨無框版) ---
 st.markdown(f'''
-    <div style="text-align: center; margin-bottom: 20px;">
+    <div class="clean-header-zone">
         <div class="flex-title">
             <span class="diamond-icon">💎</span>
             <h1>百家樂數據中心</h1>
@@ -141,7 +148,7 @@ rooms = ["— 請選擇百家樂監控桌號 —"] + [f"RB0{i}" for i in range(1
 sel_room = st.selectbox("ROOM", options=rooms, label_visibility="collapsed")
 
 if sel_room == rooms[0]:
-    st.markdown("<div class='vip-card' style='text-align: center; padding: 80px;'>📡 雲端數據搜尋中...</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; padding:80px; font-size:18px; opacity:0.7;'>📡 雲端數據搜尋中，請選取監控房號...</div>", unsafe_allow_html=True)
     st.stop()
 
 # --- 5. 狀態監控欄 ---
@@ -158,14 +165,14 @@ if cnt >= 5 and not shield:
     c1, c2 = st.columns(2)
     with c1:
         pcol = "#ff4b4b" if st.session_state.next_pred == "莊" else "#1c83e1"
-        st.markdown(f"<p style='text-align:center; opacity:0.8; margin:0;'>AI 推薦方向</p><h1 style='color:{pcol}!important; text-align:center; font-size:75px; margin:0;'>{st.session_state.next_pred}</h1>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center; opacity:0.8; margin:0;'>AI 推薦方向</p><h1 style='color:{pcol}!important; text-align:center; font-size:78px; margin:0;'>{st.session_state.next_pred}</h1>", unsafe_allow_html=True)
     with c2:
-        st.markdown(f"<p style='text-align:center; opacity:0.8; margin:0;'>數據信心度</p><h1 style='text-align:center; font-size:75px; margin:0;'>{random.randint(96, 99)}%</h1>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center; opacity:0.8; margin:0;'>數據信心度</p><h1 style='text-align:center; font-size:78px; margin:0;'>{random.randint(96, 99)}%</h1>", unsafe_allow_html=True)
 
 # --- 7. 歷史趨勢圖 ---
 if st.session_state.history:
-    dots = "".join([f"<div style='background:rgba(0,0,0,0.9); border:2.5px solid {'#ff4b4b' if x=='莊' else '#1c83e1' if x=='閒' else '#28a745'}; border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; color:white; font-size:14px; margin:0 6px;'>{x}</div>" for x in st.session_state.history[-10:]])
-    st.markdown(f"<div style='display:flex; justify-content:center; margin:25px 0;'>{dots}</div>", unsafe_allow_html=True)
+    dots = "".join([f"<div style='background:rgba(0,0,0,0.9); border:2.5px solid {'#ff4b4b' if x=='莊' else '#1c83e1' if x=='閒' else '#28a745'}; border-radius:50%; width:42px; height:42px; display:flex; align-items:center; justify-content:center; color:white; font-size:14px; margin:0 6px;'>{x}</div>" for x in st.session_state.history[-10:]])
+    st.markdown(f"<div style='display:flex; justify-content:center; margin:30px 0;'>{dots}</div>", unsafe_allow_html=True)
 
 # --- 8. 手動輸入按鈕 ---
 b1, b2, b3 = st.columns([2, 1, 2])
@@ -185,7 +192,7 @@ trend = "📡 背景分析中..." if cnt < 5 else "⚠️ 偵測亂局" if shiel
 st.markdown(f"<div style='background:rgba(0,0,0,0.4); border:1.5px solid #FFD700; border-radius:60px; padding:16px; text-align:center; margin:20px 0; color:#FFD700; letter-spacing:4px; font-weight:bold;'>{trend}</div>", unsafe_allow_html=True)
 
 # --- 10. 注碼算力中心 ---
-st.markdown("<div class='vip-card'><p style='color:#FFD700; text-align:center; font-size:24px; margin-top:0; letter-spacing:5px;'>⚖️ 百家樂注碼算力中心</p>", unsafe_allow_html=True)
+st.markdown("<div class='vip-card'><p style='color:#FFD700; text-align:center; font-size:24px; margin-top:0; letter-spacing:5px; font-weight:bold;'>⚖️ 百家樂注碼算力中心</p>", unsafe_allow_html=True)
 f1, f2 = st.columns(2)
 with f1: bal = st.number_input("本金", value=10000, step=1000, label_visibility="collapsed")
 with f2: rsk = st.slider("風險 %", 1, 10, 2, label_visibility="collapsed")
