@@ -32,7 +32,7 @@ if os.path.exists(cover_image_path):
             background-position: center top;
             background-attachment: fixed;
         }}
-        /* ⭐ 只做你要的：極淺遮罩 (0.1) 確保原圖日出橘色清晰 */
+        /* 極淺遮罩 (0.1) 保留水墨原圖色彩 */
         .stApp::before {{
             content: "";
             position: absolute;
@@ -40,15 +40,10 @@ if os.path.exists(cover_image_path):
             background-color: rgba(0, 0, 0, 0.1); 
             z-index: -1;
         }}
-        /* ⭐ 強力描邊：確保文字在彩色背景下清楚 */
+        /* 文字外框加強：確保彩色背景下看得到金額與數據 */
         h1, h2, h3, .stMetric, p, span, div, label, .stCaption {{
             color: #FFFFFF !important;
-            text-shadow: 
-                2px 2px 3px #000,
-                -1px -1px 0 #000, 
-                1px -1px 0 #000,
-                -1px 1px 0 #000,
-                 1px 1px 0 #000 !important;
+            text-shadow: 2px 2px 3px #000, -1px -1px 0 #000, 1px -1px 0 #000 !important;
             font-weight: 800 !important;
         }}
         div.stButton > button {{
@@ -62,22 +57,19 @@ if os.path.exists(cover_image_path):
         unsafe_allow_html=True
     )
 else:
-    st.markdown("<style>.stApp {{ background-color: #121212; }}</style>", unsafe_allow_html=True)
+    st.markdown("<style>.stApp { background-color: #121212; }</style>", unsafe_allow_html=True)
 
-# --- 3. ⭐ 恢復原本好好的登入介面 ---
+# --- 3. 恢復原本好好的登入介面 ---
 if not st.session_state.login:
-    # 標題恢復為原本的名稱
     st.title("💎 私人俱樂部：決策輔助工具")
     pwd = st.text_input("輸入今日授權金鑰：", type="password")
     if st.button("驗證進入", use_container_width=True):
         if pwd == today_code:
             st.session_state.login = True
             st.rerun()
-        else:
-            st.error("授權金鑰不正確")
     st.stop()
 
-# --- 4. ⭐ 恢復原本主內容佈局 ---
+# --- 4. 恢復原本主內容 ---
 st.title("💎 私人俱樂部：決策輔助工具")
 st.caption(f"🚀 AI 實時數據運算中 | {today_str}")
 
@@ -91,12 +83,11 @@ if not room_id:
     st.warning("👈 請先輸入房號以開始。")
     st.stop()
 
-# --- 5. ⭐ 恢復原本的核心決策 (5局啟動) 與按鈕邏輯 ---
+# --- 5. 核心決策 (5局啟動) ---
 count = len(st.session_state.history)
 if count < 5:
     st.subheader(f"📥 數據同步中 ({count}/5)")
     st.progress(count / 5)
-    st.info("請輸入最近 5 局結果啟動演算。")
 else:
     if st.session_state.next_pred is None:
         st.session_state.next_pred = random.choice(["莊", "閒"])
@@ -109,22 +100,20 @@ else:
     with c2: st.metric("信心值", f"{confidence}%")
     st.divider()
 
+# --- 6. 操作按鈕 (已關閉特效) ---
 st.write(f"### 📢 記錄開出結果")
 col1, col2, col3 = st.columns([2, 1, 2])
 
 def handle_click(res):
     if len(st.session_state.history) >= 5:
+        # ⭐ 特效已移除，僅更新數據
         if st.session_state.next_pred and res == st.session_state.next_pred:
             st.session_state.win_count += 1
-            st.balloons(); st.snow()
-            st.session_state.next_pred = random.choice(["莊", "閒"])
-        elif res != "和":
-            st.session_state.next_pred = random.choice(["莊", "閒"])
-    else:
-        if res != "和": st.session_state.next_pred = random.choice(["莊", "閒"])
+        
+        st.session_state.next_pred = random.choice(["莊", "閒"])
             
     st.session_state.history.append(res)
-    time.sleep(0.5)
+    time.sleep(0.3)
     st.rerun()
 
 with col1:
@@ -134,8 +123,15 @@ with col2:
 with col3:
     if st.button("🔵 閒", use_container_width=True): handle_click("閒")
 
-# --- 7. 手機端安全墊 ---
-st.write("")
+# --- 7. 下方金額計算機 ---
+st.write("---")
+st.subheader("🧮 智能注碼計算機")
+with st.expander("🛡️ 風險管理", expanded=True):
+    balance = st.number_input("💵 本金", value=10000, step=1000)
+    risk = st.slider("⚖️ 下注 %", 1, 10, 2)
+    st.success(f"💡 建議下注金額：**{int(balance * (risk / 100))}**")
+
+# --- 8. 手機端安全墊 ---
 st.write("")
 st.write("")
 st.write("")
