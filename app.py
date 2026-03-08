@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 import base64
 
-# --- 1. 初始化 ---
+# --- 1. 初始化 (2026-03-08 密碼 0308) ---
 now = datetime.now()
 today_str = now.strftime("%Y-%m-%d")
 today_code = now.strftime("%m%d")
@@ -39,36 +39,25 @@ if os.path.exists(cover_image_path):
             background-color: rgba(0, 0, 0, 0.05); 
             z-index: -1;
         }}
-        /* ⭐ 畫面集中化優化：縮小元件間距 */
         .block-container {{
             padding-top: 2rem !important;
-            padding-bottom: 0rem !important;
-            max-width: 500px !important; /* 讓畫面在寬螢幕也保持集中 */
+            max-width: 500px !important;
         }}
-        div[data-testid="stVerticalBlock"] > div {{
-            gap: 0.5rem !important;
-        }}
-        
-        /* 文字強化 */
         h1, h2, h3, .stMetric, p, span, div, label, .stCaption {{
             color: #FFFFFF !important;
             text-shadow: 3px 3px 5px #000, -1px -1px 0 #000, 1px -1px 0 #000 !important;
             font-weight: 800 !important;
         }}
-        /* 按鈕高度優化 */
         div.stButton > button {{
             background-color: rgba(0,0,0,0.6) !important;
             border: 2px solid #FFFFFF !important;
             height: 3.5em !important;
-            margin-bottom: 5px !important;
         }}
         .stSidebar {{ background-color: rgba(0,0,0,0.85); }}
         </style>
         """,
         unsafe_allow_html=True
     )
-else:
-    st.markdown("<style>.stApp { background-color: #121212; }</style>", unsafe_allow_html=True)
 
 # --- 3. 登入介面 ---
 if not st.session_state.login:
@@ -80,7 +69,7 @@ if not st.session_state.login:
             st.rerun()
     st.stop()
 
-# --- 4. 主內容 (集中顯示) ---
+# --- 4. 主內容 ---
 st.markdown("<h2 style='text-align: center;'>💎 私人俱樂部</h2>", unsafe_allow_html=True)
 
 st.sidebar.header("📌 桌面資訊")
@@ -93,8 +82,7 @@ if not room_id:
     st.warning("👈 請先輸入房號以開始。")
     st.stop()
 
-# 房號顯示：置中且加大
-st.markdown(f"<div style='text-align: center;'>📡 正在監控：<span style='font-size:36px; color:#FFD700;'>{room_id}</span></div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: center;'>📡 正在監控：<span style='font-size:32px; color:#FFD700;'>{room_id}</span></div>", unsafe_allow_html=True)
 
 # --- 5. 核心決策 ---
 count = len(st.session_state.history)
@@ -104,16 +92,18 @@ if count < 5:
 else:
     if st.session_state.next_pred is None:
         st.session_state.next_pred = random.choice(["莊", "閒"])
-    
     current_p = st.session_state.next_pred
     confidence = random.randint(92, 99)
-    
     c1, c2 = st.columns(2)
     with c1: st.metric("核心推薦", f"🔴 {current_p}" if current_p == "莊" else f"🔵 {current_p}")
     with c2: st.metric("信心值", f"{confidence}%")
 
-# --- 6. 操作按鈕 ---
-st.markdown("<p style='text-align: center; margin-top: 10px;'>📢 記錄結果</p>", unsafe_allow_html=True)
+# --- 6. ⭐ AI 路評紀錄 (已補回，限制顯示最近 10 局) ---
+if st.session_state.history:
+    styled_h = [f"🔴{x}" if x=="莊" else f"🔵{x}" if x=="閒" else f"🟢{x}" for x in st.session_state.history]
+    st.markdown(f"<div style='text-align: center; font-size: 14px; margin: 10px 0;'>{' ➡️ '.join(styled_h[-10:])}</div>", unsafe_allow_html=True)
+
+# --- 7. 操作按鈕 ---
 col1, col2, col3 = st.columns([2, 1, 2])
 
 def handle_click(res):
@@ -122,7 +112,6 @@ def handle_click(res):
             st.session_state.win_count += 1
         st.session_state.next_pred = random.choice(["莊", "閒"])
     st.session_state.history.append(res)
-    if len(st.session_state.history) > 10: st.session_state.history.pop(0)
     time.sleep(0.2)
     st.rerun()
 
@@ -133,10 +122,9 @@ with col2:
 with col3:
     if st.button("🔵 閒", use_container_width=True): handle_click("閒")
 
-# --- 7. 下方金額計算機 (收納顯示) ---
+# --- 8. 下方金額計算機 ---
 with st.expander("🧮 智能注碼計算機", expanded=True):
     balance = st.number_input("💵 本金", value=10000, step=1000)
     risk = st.slider("⚖️ 下注 %", 1, 10, 2)
     st.success(f"💡 建議下注：**{int(balance * (risk / 100))}**")
-
-st.write("") # 底部緩衝
+    
