@@ -4,7 +4,7 @@ from datetime import datetime
 import os
 import base64
 
-# --- 1. AI 權威路評核心邏輯 (術語全偵測) ---
+# --- 1. AI 權威路評核心邏輯 (含避險觀望邏輯) ---
 def get_ai_road_analysis(history, capital):
     if len(history) < 5: 
         return "⚖️ 數據樣本蒐集預熱中...", 0, 0, False
@@ -36,15 +36,22 @@ def get_ai_road_analysis(history, capital):
         status = "🪜 階梯路成型：階梯攀升，建議縮注跟隨"
         bonus_conf = 18
     
-    # 信心度與配注計算
+    # 信心度計算 (保底 50% 起跳，營造專業感)
     b_c = valid_history.count("莊"); p_c = valid_history.count("閒")
-    bias = (p_c - b_c) * 2.5
-    final_conf = int(max(min(51 + bias + bonus_conf + random.randint(-2,2), 99), 32))
+    bias = abs(p_c - b_c) * 3.2 
+    final_conf = int(max(min(52 + bias + bonus_conf + random.randint(0,2), 99), 50))
     
+    # --- 避險邏輯：信心度不足時鎖定本金 ---
     base_ratio = 0.1
-    if final_conf > 82: base_ratio = 0.25
-    elif final_conf > 68: base_ratio = 0.15
+    if final_conf > 85: base_ratio = 0.28
+    elif final_conf > 70: base_ratio = 0.15
+    elif final_conf < 58: base_ratio = 0  # 信心度低於 58% 直接不給金額
+    
     suggested_amount = int(capital * base_ratio)
+    
+    # 如果建議金額為 0，強制切換路評狀態
+    if suggested_amount == 0:
+        status = "🛡️ 盤勢震盪：AI 偵測亂路，建議暫停下注"
     
     return status, final_conf, suggested_amount, True
 
@@ -69,13 +76,12 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. 狀態管理 ---
+# --- 3. 狀態與登入 ---
 if 'login' not in st.session_state: st.session_state.login = False
 if 'locked_room' not in st.session_state: st.session_state.locked_room = None
 if 'history' not in st.session_state: st.session_state.history = []
 if 'viewers' not in st.session_state: st.session_state.viewers = random.randint(320, 380)
 
-# 登入 (經典簡潔樣式)
 if not st.session_state.login:
     st.markdown("<br><br><br><h1 style='text-align:center; color:white;'>VIP 系統登入</h1>", unsafe_allow_html=True)
     pwd = st.text_input("PASSWORD", type="password", label_visibility="collapsed", placeholder="請輸入 4 位授權碼")
@@ -85,10 +91,8 @@ if not st.session_state.login:
         else: st.error("密碼錯誤")
     st.stop()
 
-# 選房介面 (修正為 01-07)
 if st.session_state.locked_room is None:
     st.markdown("<br><br><h2 style='text-align:center; color:white;'>選擇監控桌號</h2>", unsafe_allow_html=True)
-    # 精確修正範圍至 07
     rooms = ["— 請選擇 —"] + [f"RB0{i}" for i in range(1, 8)] + [f"S0{i}" for i in range(1, 8)]
     sel_room = st.selectbox("ROOM", options=rooms, label_visibility="collapsed")
     if sel_room != rooms[0]:
@@ -109,11 +113,16 @@ if is_unlocked:
     b_c = st.session_state.history.count("莊"); p_c = st.session_state.history.count("閒")
     next_p = "莊" if p_c >= b_c else "閒"
     p_color = "#FF0000" if next_p == "莊" else "#0000FF"
-    c_color = "#FF0000" if conf > 75 else "#FFF"
-    c1, c2 = st.columns(2)
-    with c1: st.markdown(f'<div style="text-align:center;"><p style="color:#AAA; font-size:14px; margin:0;">AI 智能預測</p><p style="color:{p_color} !important; font-size:105px; font-weight:900; margin:-20px 0;">{next_p}</p></div>', unsafe_allow_html=True)
-    with c2: st.markdown(f'<div style="text-align:center;"><p style="color:#AAA; font-size:14px; margin:0;">分析信心度</p><p style="color:{c_color} !important; font-size:105px; font-weight:900; margin:-20px 0;">{conf}%</p></div>', unsafe_allow_html=True)
-    st.markdown(f'<p class="gold-amount">{amount:,}</p>', unsafe_allow_html=True)
+    c_color = "#FF0000" if conf > 78 else "#FFF"
+    
+    # 判斷是否為避險狀態
+    if amount == 0:
+        st.markdown(f"""<div class="lock-box"><div style="text-align:center;"><p style="color:#D4AF37; font-size:32px; font-weight:bold; margin:0;">SAFE MODE</p><p style="color:#888; font-size:16px;">AI 偵測亂路，目前建議觀望</p></div></div>""", unsafe_allow_html=True)
+    else:
+        c1, c2 = st.columns(2)
+        with c1: st.markdown(f'<div style="text-align:center;"><p style="color:#AAA; font-size:14px; margin:0;">AI 智能預測</p><p style="color:{p_color} !important; font-size:105px; font-weight:900; margin:-20px 0;">{next_p}</p></div>', unsafe_allow_html=True)
+        with c2: st.markdown(f'<div style="text-align:center;"><p style="color:#AAA; font-size:14px; margin:0;">分析信心度</p><p style="color:{c_color} !important; font-size:105px; font-weight:900; margin:-20px 0;">{conf}%</p></div>', unsafe_allow_html=True)
+        st.markdown(f'<p class="gold-amount">{amount:,}</p>', unsafe_allow_html=True)
 else:
     st.markdown(f"""<div class="lock-box"><div style="text-align:center;"><p style="color:#888; font-size:24px; margin:0;">⌛ 數據分析鎖定中</p><p style="color:#555; font-size:14px;">請先輸入 {5 - len(st.session_state.history)} 局開牌紀錄以啟動運算</p></div></div>""", unsafe_allow_html=True)
 
@@ -128,7 +137,6 @@ if b1.button("🔴 莊 家", use_container_width=True): update_action("莊")
 if b2.button("和", use_container_width=True): update_action("和")
 if b3.button("🔵 閒 家", use_container_width=True): update_action("閒")
 
-# AI 路評白條 (隨開牌變動術語)
 st.markdown(f"<div class='white-bar' style='margin-top:15px;'>{insight}</div>", unsafe_allow_html=True)
 
 if st.button("更換桌號 / 重置數據", use_container_width=True):
