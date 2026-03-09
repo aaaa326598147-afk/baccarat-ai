@@ -4,9 +4,8 @@ from datetime import datetime
 import os
 import base64
 
-# --- 1. AI 權威路評核心邏輯 (含 5 局鎖定判定) ---
+# --- 1. AI 權威路評核心邏輯 (術語全偵測) ---
 def get_ai_road_analysis(history, capital):
-    # 核心鎖定邏輯：未滿 5 局不提供預測
     if len(history) < 5: 
         return "⚖️ 數據樣本蒐集預熱中...", 0, 0, False
     
@@ -33,13 +32,15 @@ def get_ai_road_analysis(history, capital):
     elif path.endswith("閒莊") and valid_history.count("閒") > 3:
         status = "✨ 逢閒即跳：慣性跳點形成，勝率極高"
         bonus_conf = 22
+    elif "莊莊莊閒閒" in path or "閒閒閒莊莊" in path:
+        status = "🪜 階梯路成型：階梯攀升，建議縮注跟隨"
+        bonus_conf = 18
     
-    # 信心度計算
+    # 信心度與配注計算
     b_c = valid_history.count("莊"); p_c = valid_history.count("閒")
     bias = (p_c - b_c) * 2.5
     final_conf = int(max(min(51 + bias + bonus_conf + random.randint(-2,2), 99), 32))
     
-    # 配注計算
     base_ratio = 0.1
     if final_conf > 82: base_ratio = 0.25
     elif final_conf > 68: base_ratio = 0.15
@@ -74,7 +75,7 @@ if 'locked_room' not in st.session_state: st.session_state.locked_room = None
 if 'history' not in st.session_state: st.session_state.history = []
 if 'viewers' not in st.session_state: st.session_state.viewers = random.randint(320, 380)
 
-# 第一階段：登入
+# 登入 (經典簡潔樣式)
 if not st.session_state.login:
     st.markdown("<br><br><br><h1 style='text-align:center; color:white;'>VIP 系統登入</h1>", unsafe_allow_html=True)
     pwd = st.text_input("PASSWORD", type="password", label_visibility="collapsed", placeholder="請輸入 4 位授權碼")
@@ -84,10 +85,11 @@ if not st.session_state.login:
         else: st.error("密碼錯誤")
     st.stop()
 
-# 第二階段：選房
+# 選房介面 (修正為 01-07)
 if st.session_state.locked_room is None:
     st.markdown("<br><br><h2 style='text-align:center; color:white;'>選擇監控桌號</h2>", unsafe_allow_html=True)
-    rooms = ["— 請選擇 —"] + [f"RB0{i}" for i in range(1, 10)] + [f"S0{i}" for i in range(1, 10)]
+    # 精確修正範圍至 07
+    rooms = ["— 請選擇 —"] + [f"RB0{i}" for i in range(1, 8)] + [f"S0{i}" for i in range(1, 8)]
     sel_room = st.selectbox("ROOM", options=rooms, label_visibility="collapsed")
     if sel_room != rooms[0]:
         st.session_state.locked_room = sel_room; st.rerun()
@@ -100,13 +102,10 @@ st.markdown(f'<div class="viewer-box"><span style="color:#F8D06E; font-size:14px
 st.markdown('<p style="text-align:center; color:#AAA; font-size:14px; margin-bottom:5px;">可調動本金設定</p>', unsafe_allow_html=True)
 user_capital = st.number_input("CAPITAL", value=10000, step=1000, label_visibility="collapsed")
 
-# 獲取 AI 分析與鎖定狀態
 insight, conf, amount, is_unlocked = get_ai_road_analysis(st.session_state.history, user_capital)
 st.markdown(f'<div class="white-bar">● {st.session_state.locked_room} 監控中 (進度: {len(st.session_state.history)}/5)</div>', unsafe_allow_html=True)
 
-# 判斷是否解鎖
 if is_unlocked:
-    # 已滿五局，顯示分析結果
     b_c = st.session_state.history.count("莊"); p_c = st.session_state.history.count("閒")
     next_p = "莊" if p_c >= b_c else "閒"
     p_color = "#FF0000" if next_p == "莊" else "#0000FF"
@@ -116,31 +115,20 @@ if is_unlocked:
     with c2: st.markdown(f'<div style="text-align:center;"><p style="color:#AAA; font-size:14px; margin:0;">分析信心度</p><p style="color:{c_color} !important; font-size:105px; font-weight:900; margin:-20px 0;">{conf}%</p></div>', unsafe_allow_html=True)
     st.markdown(f'<p class="gold-amount">{amount:,}</p>', unsafe_allow_html=True)
 else:
-    # 未滿五局，顯示鎖定畫面
-    st.markdown(f"""
-        <div class="lock-box">
-            <div style="text-align:center;">
-                <p style="color:#888; font-size:24px; margin:0;">⌛ 數據分析鎖定中</p>
-                <p style="color:#555; font-size:14px;">請先輸入 {5 - len(st.session_state.history)} 局開牌紀錄以啟動運算</p>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f"""<div class="lock-box"><div style="text-align:center;"><p style="color:#888; font-size:24px; margin:0;">⌛ 數據分析鎖定中</p><p style="color:#555; font-size:14px;">請先輸入 {5 - len(st.session_state.history)} 局開牌紀錄以啟動運算</p></div></div>""", unsafe_allow_html=True)
 
-# 珠盤路與操作按鈕
 road_html = "".join([f'<div style="width:38px; height:38px; border-radius:50%; background:{"#FF0000" if i=="莊" else "#0000FF" if i=="閒" else "#28A745"}; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; border:1px solid rgba(255,255,255,0.3);">{i}</div>' for i in st.session_state.history])
 st.markdown(f'<div class="road-map-container">{road_html}</div>', unsafe_allow_html=True)
 
 b1, b2, b3 = st.columns([2, 1, 2])
 def update_action(r):
-    st.session_state.history.append(r)
-    st.session_state.viewers += random.choice([-2, 1, 4])
-    st.rerun()
+    st.session_state.history.append(r); st.session_state.viewers += random.choice([-2, 1, 4]); st.rerun()
 
 if b1.button("🔴 莊 家", use_container_width=True): update_action("莊")
 if b2.button("和", use_container_width=True): update_action("和")
 if b3.button("🔵 閒 家", use_container_width=True): update_action("閒")
 
-# AI 路評 (下方白條)
+# AI 路評白條 (隨開牌變動術語)
 st.markdown(f"<div class='white-bar' style='margin-top:15px;'>{insight}</div>", unsafe_allow_html=True)
 
 if st.button("更換桌號 / 重置數據", use_container_width=True):
